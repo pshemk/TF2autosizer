@@ -896,6 +896,7 @@ local function rebuildLineSettingsLayout()
                                     text = shippingContract.shippingContractName,
                                     icon = "ui/hud/cargo_" .. string.lower(cargoTypes[tonumber(shippingContract.cargoId)]) .. "@2x.tga",
                                     iconTip = string.lower(cargoTypes[tonumber(shippingContract.cargoId)]),
+                                    icon2 = "ui/icons/game-menu/configure_line@2x.tga",
                                     icon2Tip = "",
                                     value = {
 
@@ -968,6 +969,7 @@ local function rebuildLineSettingsLayout()
                             for _,cargoGroup in pairs(cargoGroups) do 
                                 table.insert(dropDownEntries, {
                                     text = cargoGroup.cargoGroupName,
+                                    icon2 = "ui/icons/game-menu/cargo@2x.tga",
                                     iconTip = "",
                                     icon2Tip = "",
                                     value = {
@@ -2728,6 +2730,7 @@ local function rebuildCargoGroupsLayout()
                                 text = shippingContract.shippingContractName,
                                 icon = "ui/hud/cargo_" .. string.lower(cargoTypes[tonumber(shippingContract.cargoId)]) .. "@2x.tga",
                                 iconTip = string.lower(cargoTypes[tonumber(shippingContract.cargoId)]),
+                                icon2 = "ui/icons/game-menu/configure_line@2x.tga",
                                 icon2Tip = "",
                                 value = {
                                     [asrEnum.cargoGroupMember.TYPE] = "shippingContract",
@@ -2796,6 +2799,7 @@ local function rebuildCargoGroupsLayout()
                         if not memberFound then 
                             table.insert(dropDownEntries, {
                                 text = cargoGroup.cargoGroupName,
+                                icon2 = "ui/icons/game-menu/cargo@2x.tga",
                                 iconTip = "",
                                 icon2Tip = "",
                                 value = {
