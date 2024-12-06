@@ -1315,7 +1315,7 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
             local capacityScaleFactor = 1
 
             -- check if we need to adjust the capacity 
-            if stationConfig[asrEnum.station.CAPACITY_ADJUSTMENT_ENABLED] == true and stationConfig[asrEnum.station.CAPACITY_ADJUSTMENT_VALUE] ~= 0 then 
+            if stationConfig[asrEnum.station.CAPACITY_ADJUSTMENT_ENABLED] == true and stationConfig[asrEnum.station.CAPACITY_ADJUSTMENT_VALUE] and stationConfig[asrEnum.station.CAPACITY_ADJUSTMENT_VALUE] ~= 0 then 
                     capacityScaleFactor = capacityScaleFactor + stationConfig[asrEnum.station.CAPACITY_ADJUSTMENT_VALUE]/100
                     log("engine: train " .. getTrainName(trainId) .. " capacity factor: " .. capacityScaleFactor)
             end
