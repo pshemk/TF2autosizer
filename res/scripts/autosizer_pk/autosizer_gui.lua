@@ -3207,6 +3207,17 @@ local function buildMainWindow()
 
     local settingsTable = api.gui.comp.Table.new(3, 'NONE')
 
+    -- if no settings are present to start with - use the defaults
+
+    if asrState[asrEnum.SETTINGS] == nil then 
+
+        asrState[asrEnum.SETTINGS] = {}
+        asrState[asrEnum.SETTINGS][asrEnum.settings.EXTRA_CAPACITY] = 0
+        asrState[asrEnum.SETTINGS][asrEnum.settings.ENABLE_TRAIN_PURCHASE] = false
+        asrState[asrEnum.SETTINGS][asrEnum.settings.TRAIN_LENGTH] = 160
+        asrState[asrEnum.SETTINGS][asrEnum.settings.MINIMAL_WAGON_COUNT] = 1
+    end
+
     local gloalMinimalTrainSizeLabel = api.gui.comp.TextView.new(i18Strings.minimal_train_wagon_count)
     gloalMinimalTrainSizeLabel:setTooltip(i18Strings.minimal_train_wagon_count_tip)
     local MinimalTrainSizeValue = api.gui.comp.TextView.new("")
