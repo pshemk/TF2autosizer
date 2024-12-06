@@ -37,6 +37,28 @@ local fetchStockSystem = false
 local trainsStatus = ""
 local trainNameCache = {}
 
+-- needed to get the in-game time
+local worldId
+
+local function getGameTime()
+
+    if not worldId then worldId = api.engine.util.getWorld() end
+    local gameTime = api.engine.getComponent(worldId, api.type.ComponentType.GAME_TIME)
+    if gameTime then
+        return gameTime.gameTime/1000
+    end
+
+end
+
+local function getGameSpeed()
+
+    if not worldId then worldId = api.engine.util.getWorld() end
+    local gameSpeed = api.engine.getComponent(worldId, api.type.ComponentType.GAME_SPEED)
+    if gameSpeed then
+        return gameSpeed.speedup
+    end
+end
+
 local function log(message) 
     if engineState[asrEnum.STATUS] and engineState[asrEnum.STATUS][asrEnum.status.DEBUG_ENABLED] then
         print(message)
@@ -99,8 +121,8 @@ end
 local function disableLine(lineId)
     log("disabling line " .. lineId)
     engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ENABLED] = false
-    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Configured"
-    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = "Configured"
+    -- engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Configured"
+    -- engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = "Configured"
     engineState[asrEnum.UPDATE_TIMESTAMP] = asrHelper.getUniqueTimestamp()
 end
 
@@ -143,12 +165,14 @@ local function checkLineConfig(lineId)
             end
         end
     end
+    log("engine: checkLineConfig: enabled: " .. enabledStations .. " valid: " .. validStations)
     if enabledStations > 0 and validStations == enabledStations  then
         if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "OK" then 
             if engineState[asrEnum.LINES][tostring(lineId)].enabled then 
                 enableLine(lineId)
             end
         else
+            log("engine: checkLineConfig: got to configured")
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Configured"
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = _("status_configured")
             if engineState[asrEnum.LINES][tostring(lineId)].enabled then 
@@ -156,6 +180,7 @@ local function checkLineConfig(lineId)
             end
         end
     else
+        log("engine: checkLineConfig: got to miconfigured stations")
         engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Misconfigured"
         engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = _("status_miconfigured_stations")
         if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ENABLED] == true then 
@@ -193,6 +218,40 @@ local function flushTrackingInfo(lineId)
 end
 
 
+local function increaseMemberInUseCounter(memberId, memberType)
+
+    if memberType == "shippingContract" then
+        if  engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] == nil then 
+            engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] = 1
+       else
+            engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] = engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] + 1
+       end
+    end
+    if memberType == "cargoGroup" then
+        if  engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] == nil then 
+            engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] = 1
+       else
+            engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] = engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] + 1
+       end
+    end
+end
+
+local function decreaseMemberInUseCounter(memberId, memberType)
+
+    if memberType == "shippingContract" then
+        if engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] and 
+            engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] > 0 then
+            engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] = engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] - 1
+        end
+    end
+    if memberType == "cargoGroup" then
+        if engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] and 
+            engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] > 0 then
+            engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] = engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] - 1
+        end
+    end
+end
+
 local function updateStation(stationConfig) 
 
     log("engine: received station config: ")
@@ -219,7 +278,7 @@ local function updateStation(stationConfig)
                 -- clear all shipping contract related entries, free the contract id if set 
                 local previousShippingContractId = engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.SHIPPING_CONTRACT_ID]
                 if previousShippingContractId then 
-                    engineState[asrEnum.SHIPPING_CONTRACTS][tostring(previousShippingContractId)][asrEnum.shippingContract.IN_USE] = engineState[asrEnum.SHIPPING_CONTRACTS][tostring(previousShippingContractId)][asrEnum.shippingContract.IN_USE] - 1
+                    decreaseMemberInUseCounter(previousShippingContractId, "shippingContract")
                 end
                 engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.SELECTOR] = nil
                 engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.SHIPPING_CONTRACT_ID] = nil
@@ -230,27 +289,19 @@ local function updateStation(stationConfig)
                 -- check if there's a previous shipping contract, if so - decrease the reference counter
                 local previousShippingContractId = engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.SHIPPING_CONTRACT_ID]
                 if previousShippingContractId then
-                    if engineState[asrEnum.SHIPPING_CONTRACTS][tostring(previousShippingContractId)] and 
-                        engineState[asrEnum.SHIPPING_CONTRACTS][tostring(previousShippingContractId)][asrEnum.shippingContract.IN_USE] and 
-                        engineState[asrEnum.SHIPPING_CONTRACTS][tostring(previousShippingContractId)][asrEnum.shippingContract.IN_USE] > 0 then
-                        engineState[asrEnum.SHIPPING_CONTRACTS][tostring(previousShippingContractId)][asrEnum.shippingContract.IN_USE] = engineState[asrEnum.SHIPPING_CONTRACTS][tostring(previousShippingContractId)][asrEnum.shippingContract.IN_USE] - 1
-                    end
+                    decreaseMemberInUseCounter(previousShippingContractId, "shippingContract")
                 end
                 if stationConfig.config[asrEnum.station.SHIPPING_CONTRACT_ID] and engineState[asrEnum.SHIPPING_CONTRACTS][tostring(stationConfig.config[asrEnum.station.SHIPPING_CONTRACT_ID])] then
-                    if engineState[asrEnum.SHIPPING_CONTRACTS][tostring(stationConfig.config[asrEnum.station.SHIPPING_CONTRACT_ID])][asrEnum.shippingContract.IN_USE] == nil then
-                        engineState[asrEnum.SHIPPING_CONTRACTS][tostring(stationConfig.config[asrEnum.station.SHIPPING_CONTRACT_ID])][asrEnum.shippingContract.IN_USE] = 1
-                    else
-                        engineState[asrEnum.SHIPPING_CONTRACTS][tostring(stationConfig.config[asrEnum.station.SHIPPING_CONTRACT_ID])][asrEnum.shippingContract.IN_USE] = engineState[asrEnum.SHIPPING_CONTRACTS][tostring(stationConfig.config[asrEnum.station.SHIPPING_CONTRACT_ID])][asrEnum.shippingContract.IN_USE] + 1
-                    end
+                    increaseMemberInUseCounter(stationConfig.config[asrEnum.station.SHIPPING_CONTRACT_ID], "shippingContract")
                 end
             end
         end
         if stationConfig.config[asrEnum.station.SELECTOR] and stationConfig.config[asrEnum.station.SELECTOR] == "cargoGroup" then
             if stationConfig.config[asrEnum.station.CARGO_GROUP_ID] == asrEnum.value.DELETE then
                 -- clear all cargo group related entries, free the id if set 
-                local previousCargoGrouptId = engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.CARGO_GROUP_ID]
-                if previousCargoGrouptId then 
-                    engineState[asrEnum.CARGO_GROUPS][tostring(previousCargoGrouptId)][asrEnum.cargoGroup.IN_USE] = engineState[asrEnum.CARGO_GROUPS][tostring(previousCargoGrouptId)][asrEnum.cargoGroup.IN_USE] - 1
+                local previousCargoGroupId = engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.CARGO_GROUP_ID]
+                if previousCargoGroupId then 
+                    decreaseMemberInUseCounter(previousCargoGroupId, "cargoGroup")
                 end
                 engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.SELECTOR] = nil
                 engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.CARGO_GROUP_ID] = nil
@@ -259,19 +310,11 @@ local function updateStation(stationConfig)
             else 
                 -- check if there's a previous cargo gorup, if so - decrease the reference counter
                 local previousCargoGroupId = engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.CARGO_GROUP_ID]
-                if previousCargoGroupId then
-                    if engineState[asrEnum.CARGO_GROUPS][tostring(previousCargoGroupId)] and 
-                        engineState[asrEnum.CARGO_GROUPS][tostring(previousCargoGroupId)][asrEnum.cargoGroup.IN_USE] and 
-                        engineState[asrEnum.CARGO_GROUPS][tostring(previousCargoGroupId)][asrEnum.cargoGroup.IN_USE] > 0 then
-                            engineState[asrEnum.CARGO_GROUPS][tostring(previousCargoGroupId)][asrEnum.cargoGroup.IN_USE] = engineState[asrEnum.CARGO_GROUPS][tostring(previousCargoGroupId)][asrEnum.cargoGroup.IN_USE] - 1
-                    end
+                if previousCargoGroupId then 
+                    decreaseMemberInUseCounter(previousCargoGroupId, "cargoGroup")
                 end
                 if stationConfig.config[asrEnum.station.CARGO_GROUP_ID] and engineState[asrEnum.CARGO_GROUPS][tostring(stationConfig.config[asrEnum.station.CARGO_GROUP_ID])] then
-                    if stationConfig.config[asrEnum.station.CARGO_GROUP_ID] and engineState[asrEnum.CARGO_GROUPS][tostring(stationConfig.config[asrEnum.station.CARGO_GROUP_ID])][asrEnum.cargoGroup.IN_USE] == nil then
-                        engineState[asrEnum.CARGO_GROUPS][tostring(stationConfig.config[asrEnum.station.CARGO_GROUP_ID])][asrEnum.cargoGroup.IN_USE] = 1
-                    else
-                        engineState[asrEnum.CARGO_GROUPS][tostring(stationConfig.config[asrEnum.station.CARGO_GROUP_ID])][asrEnum.cargoGroup.IN_USE] = engineState[asrEnum.CARGO_GROUPS][tostring(stationConfig.config[asrEnum.station.CARGO_GROUP_ID])][asrEnum.cargoGroup.IN_USE] + 1
-                    end
+                    increaseMemberInUseCounter(stationConfig.config[asrEnum.station.CARGO_GROUP_ID], "cargoGroup")
                 end
             end
         end
@@ -380,7 +423,10 @@ local function generateShippingContractName(shippingContractId)
     local townNames = {}
     
     api.engine.forEachEntityWithComponent(function (townId) 
-        table.insert(townNames, api.engine.getComponent(townId, api.type.ComponentType.NAME).name)
+        local townName = api.engine.getComponent(townId, api.type.ComponentType.NAME)
+            if townName then
+                table.insert(townNames, townName.name)
+            end
     end, api.type.ComponentType.TOWN)
 
     local shippingContract = engineState[asrEnum.SHIPPING_CONTRACTS][tostring(shippingContractId)]
@@ -437,7 +483,10 @@ local function generateCargoGroupName(cargoGroupId)
     local townNames = {}
     
     api.engine.forEachEntityWithComponent(function (townId) 
-        table.insert(townNames, api.engine.getComponent(townId, api.type.ComponentType.NAME).name)
+        local townName = api.engine.getComponent(townId, api.type.ComponentType.NAME)
+            if townName then
+                table.insert(townNames, townName.name)
+            end
     end, api.type.ComponentType.TOWN)
 
     
@@ -1358,7 +1407,7 @@ local function checkTrainsPositions()
                     engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.GENERATED_CONFIG] = true
                     engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACE_ON] = stage
                     engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IN_STATION] = true
-                    engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.ARRIVAL_TIMESTAMP] = game.interface.getGameTime().time
+                    engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.ARRIVAL_TIMESTAMP] = getGameTime()
 
                     if stage == "arrival" then
                         local replaceCmd = api.cmd.make.replaceVehicle(tonumber(trainId), replacementConfig)
@@ -1415,7 +1464,7 @@ local function checkTrainsPositions()
                 end
 
                 if trainPrevInfo[asrEnum.trackedTrain.ARRIVAL_TIMESTAMP] then 
-                    local stopDuration = (game.interface.getGameTime().time - trainPrevInfo[asrEnum.trackedTrain.ARRIVAL_TIMESTAMP])
+                    local stopDuration = (getGameTime() - trainPrevInfo[asrEnum.trackedTrain.ARRIVAL_TIMESTAMP])
                     log("engine: train " .. getTrainName(trainId) .. " spent " .. stopDuration .. " s")
 
                     if trainPrevInfo[asrEnum.trackedTrain.STOP_INDEX] then 
@@ -1430,7 +1479,7 @@ local function checkTrainsPositions()
                                 table.remove(engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainPrevInfo[asrEnum.trackedTrain.STOP_INDEX] + 1][asrEnum.station.STOP_DURATION], 1) 
                             end
                         end
-                        engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.DEPARTURE_TIMESTAMP] = game.interface.getGameTime().time
+                        engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.DEPARTURE_TIMESTAMP] = getGameTime()
                     else
                         log("engine: train " .. getTrainName(trainId) .. " no previous stop info")
                     end
@@ -1847,40 +1896,6 @@ local function setGlobalSettings(params)
 end
 
 
-local function increaseMemberInUseCounter(memberId, memberType)
-
-    if memberType == "shippingContract" then
-        if  engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] == nil then 
-            engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] = 1
-       else
-            engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] = engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] + 1
-       end
-    end
-    if memberType == "cargoGroup" then
-        if  engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] == nil then 
-            engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] = 1
-       else
-            engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] = engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] + 1
-       end
-    end
-end
-
-local function decreaseMemberInUseCounter(memberId, memberType)
-
-    if memberType == "shippingContract" then
-        if engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] and 
-            engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] > 0 then
-            engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] = engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] - 1
-        end
-    end
-    if memberType == "cargoGroup" then
-        if engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] and 
-            engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] > 0 then
-            engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] = engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] - 1
-        end
-    end
-end
-
 local function updateShippingContract(params) 
 
     log("engine: updateShippingContract:")
@@ -2138,12 +2153,11 @@ end
 -- main loop
 function asrEngine.update()
 
-    if game.interface.getGameSpeed() > 0 and not flags.paused then 
+    if getGameSpeed() > 0 and not flags.paused then 
         local startTime = os.clock()
 
         if flags.initDone then     
             checkTrainsPositions()
-
 
             if coroutines.updateSupplyChains == nil or coroutine.status(coroutines.updateSupplyChains) == "dead" then
                 coroutines.updateSupplyChains = coroutine.create(updateSupplyChains)
@@ -2186,6 +2200,7 @@ function asrEngine.update()
 
     -- initial setup
     if not flags.initDone then
+        print("autosizer - initialising")
         -- check if we have the default settings
         if engineState[asrEnum.SETTINGS] == nil then
             engineState[asrEnum.SETTINGS] = {}
