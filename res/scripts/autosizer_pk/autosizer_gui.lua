@@ -3234,7 +3234,7 @@ local function buildMainWindow()
     local MinimalTrainSizeFiller = api.gui.comp.TextView.new("")
 
     local trainLengthTextInput = api.gui.comp.TextInputField.new("000")
-    if asrState[asrEnum.SETTINGS][asrEnum.settings.TRAIN_LENGTH] then
+    if asrState[asrEnum.SETTINGS] and asrState[asrEnum.SETTINGS][asrEnum.settings.TRAIN_LENGTH] then
         trainLengthTextInput:setText(tostring(asrState[asrEnum.SETTINGS][asrEnum.settings.TRAIN_LENGTH]), false)
     end
     trainLengthTextInput:setMaxLength(3)
@@ -3282,7 +3282,7 @@ local function buildMainWindow()
     local enableTimingsLabel = api.gui.comp.TextView.new(i18Strings.enable_timings)
     local enableTimingsCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
     enableTimingsCheckBox:setId("asr.timingsEnabled")
-    if asrState[asrEnum.STATUS][asrEnum.status.TIMINGS_ENABLED] then
+    if asrState[asrEnum.STATUS] and asrState[asrEnum.STATUS][asrEnum.status.TIMINGS_ENABLED] then
         enableTimingsCheckBox:setSelected(true, false)
     else
         enableTimingsCheckBox:setSelected(false, false)
@@ -3303,7 +3303,7 @@ local function buildMainWindow()
     local enableDebugLabel = api.gui.comp.TextView.new(i18Strings.enable_debug)
     local enableDebugCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
     enableDebugCheckBox:setId("asr.debugEnabled")
-    if asrState[asrEnum.STATUS][asrEnum.status.DEBUG_ENABLED] then
+    if asrState[asrEnum.STATUS] and asrState[asrEnum.STATUS][asrEnum.status.DEBUG_ENABLED] then
         enableDebugCheckBox:setSelected(true, false)
     else
         enableDebugCheckBox:setSelected(false, false)
@@ -3325,7 +3325,7 @@ local function buildMainWindow()
     local timingsTable = api.gui.comp.Table.new(3, 'NONE')
     timingsTable:setId("asr.timingsTable")
 
-    if asrState[asrEnum.STATUS][asrEnum.status.TIMINGS_ENABLED] then
+    if asrState[asrEnum.STATUS] and asrState[asrEnum.STATUS][asrEnum.status.TIMINGS_ENABLED] then
         timingsTable:setVisible(true, false)
     else
         timingsTable:setVisible(false, false)
@@ -3395,7 +3395,7 @@ local function buildMainWindow()
         sendEngineCommand("asrCheckTrainConfigs")
     end)
 
-    if asrState[asrEnum.STATUS][asrEnum.status.DEBUG_ENABLED] then
+    if asrState[asrEnum.STATUS] and asrState[asrEnum.STATUS][asrEnum.status.DEBUG_ENABLED] then
         debugTable:setVisible(true, false)
     else
         debugTable:setVisible(false, false)
