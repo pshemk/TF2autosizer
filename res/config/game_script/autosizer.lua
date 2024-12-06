@@ -16,7 +16,7 @@ function data()
             if id == "vehicleManager" and name == "accept" then
                 -- new vehicle purchased or cloned or deleted
                 autosizerGui.forceLineCheck()
-            elseif id == "lineChooseButton" and name == "button.click" then
+            elseif id == "lineListButton" and name == "button.click" then
                 -- vehicle assigned to line
                 autosizerGui.forceLineCheck()
             end
