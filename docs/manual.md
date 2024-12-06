@@ -1,4 +1,4 @@
-# Train Autosizer for Transport Fever 2?
+# Train Autosizer for Transport Fever 2
 
 ## What is it?
 
