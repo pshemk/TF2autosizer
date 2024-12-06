@@ -26,7 +26,20 @@ function data()
             manual = "Manual",
             minimal_train_wagon_count = "Minimal train wagon count",
             minimal_train_wagon_count_tip = "Minimal number of wagons each train should always have",
-            mod_desc = "Automatically adds or removes wagons to the train to meet required cargo carrying capacities.",
+            mod_desc = [[
+[h1]Train Autosizer[/h1]
+
+This mod allows you to change train length automatically at a station, according to set rules. It aims to simplify line management and maintain sufficient capacity when requirements change. 
+It can track the production or consumption of an industry (or a town) and calculate the required amount of wagons neccessary to carry all the cargo. If the production changes - the train length gets adjusted automatically. 
+In additon to simply tracking industries it can also use groupings, such as "shipping contracts" or "cargo groups" to enable more complex scenarios, such as cargo hubs. The trains can also be configured to pick up cargo currently waiting at the station.
+
+The manual is available on [url=https://github.com/pshemk/TF2autosizer/blob/main/docs/manual.md]GitHub[/url]
+
+If you find a bug or would like to see some other changes - please raise an issue on GitHub.
+
+If you like my mod [url=https://buymeacoffee.com/peteraklnz]buy me a coffee :-) [/url]
+            
+            ]],
             name = "Name",
             name_desc = "Train Autosizer",
             new_cargo_group = "New cargo group",
