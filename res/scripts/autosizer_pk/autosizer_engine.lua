@@ -369,7 +369,7 @@ local function updateLinesInfo()
         }
     end
 
-    log("engine: state")
+    -- log("engine: state")
     -- asrHelper.tprint(engineState[asrEnum.STATUS])
     -- add any missing lines to the current state
     for _,lineId in pairs(lines) do
