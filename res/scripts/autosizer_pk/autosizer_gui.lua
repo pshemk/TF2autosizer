@@ -758,7 +758,7 @@ local function rebuildLineSettingsLayout()
                             local stationIndustries = {}
                             if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.INDUSTRIES] ~= nil then 
                                 for industryId, industry in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.INDUSTRIES]) do
-                                    if asrState[asrEnum.INDUSTRIES][tostring(industryId)] ~= nil then 
+                                    if asrState[asrEnum.INDUSTRIES] and asrState[asrEnum.INDUSTRIES][tostring(industryId)] ~= nil then 
                                         if asrState[asrEnum.INDUSTRIES][tostring(industryId)][asrEnum.industry.SUPPLIER] ~= nil then
                                             for cargoId, amount in pairs(asrState[asrEnum.INDUSTRIES][tostring(industryId)][asrEnum.industry.SUPPLIER]) do
                                                 if station[asrEnum.station.STATION_ID] == industry[asrEnum.lineIndustry.STATION_ID] then
@@ -772,7 +772,7 @@ local function rebuildLineSettingsLayout()
                                                 end
                                             end
                                         end
-                                        if asrState[asrEnum.INDUSTRIES][tostring(industryId)][asrEnum.industry.CONSUMER] ~= nil then
+                                        if asrState[asrEnum.INDUSTRIES] and asrState[asrEnum.INDUSTRIES][tostring(industryId)][asrEnum.industry.CONSUMER] ~= nil then
                                             for cargoId, amount in pairs(asrState[asrEnum.INDUSTRIES][tostring(industryId)][asrEnum.industry.CONSUMER]) do
                                                 table.insert(stationIndustries, {
                                                     cargoId = cargoId,
@@ -1496,7 +1496,7 @@ local function  rebuildLinesTable()
             lineColour:setId("asr.lineColour-" .. lineId)
             local lineStatus = api.gui.comp.TextView.new("●")
             lineStatus:setId("asr.lineStatus-" .. lineId)
-            local lineName = api.gui.comp.TextView.new(tostring(line.name))
+            local lineName = api.gui.comp.TextView.new(tostring(line[asrEnum.line.NAME]))
             lineName:setStyleClassList({"asrLineName"})
             lineName:setId("asr.lineName-" .. lineId)
 
