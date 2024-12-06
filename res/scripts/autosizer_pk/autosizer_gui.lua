@@ -3490,6 +3490,7 @@ local function guiInit()
             linesWindow:setVisible(false,true)
             
         else
+            sendEngineCommand("asrForceLineCheck")
             asrGuiState.isVisible = true
             linesWindow:setVisible(true,true)
         end
