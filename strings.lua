@@ -31,7 +31,7 @@ function data()
             name_desc = "Train Autosizer",
             new_cargo_group = "New cargo group",
             new_shipping_contract = "New shipping contract",
-            pickup_waiting = "Pickup waiting",
+            pickup_waiting = "Pick up waiting",
             pickup_wating_tip = "Additional amount of waiting cargo to pick up,\nover the calculated value.",
             rename_cargo_group = "Rename cargo group",
             rename_shipping_contract = "Rename shipping contract",
@@ -45,11 +45,6 @@ function data()
             train_length = "Train length",
             wagons = "Wagons",
             wagons_refresh_tip = "Rebuild the list of available wagons",
-
-
-
-
-
     }
 }
 end
