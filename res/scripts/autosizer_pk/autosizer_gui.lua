@@ -3470,34 +3470,25 @@ local function guiInit()
     asrButton:setName("ConstructionMenuIndicator")
     mainButtonsLayout:addItem(asrButton)
 
+    -- local buttonLabel = api.gui.comp.TextView.new("Autosizer")
 
-    local buttonLabel = api.gui.comp.TextView.new("Autosizer")
-
-    local button = api.gui.comp.Button.new(buttonLabel, false)
+    -- local button = api.gui.comp.Button.new(buttonLabel, false)
     
-    local gameInfoLayout = api.gui.util.getById("gameInfo"):getLayout()
-    gameInfoLayout:addItem(button)
+    -- local gameInfoLayout = api.gui.util.getById("gameInfo"):getLayout()
+    -- gameInfoLayout:addItem(button)
 
     local linesWindow = buildMainWindow()
 
     linesWindow:setVisible(false,false)
-
-    button:onClick(function ()
-        if asrGuiState.isVisible then
-            asrGuiState.isVisible = false
-            linesWindow:setVisible(false,true)
-
-        else
-            asrGuiState.isVisible = true
-            linesWindow:setVisible(true,true)
-        end
-
+    linesWindow:onClose(function ()
+        asrButton:setSelected(false, false)
     end)
-
     asrButton:onToggle(function ()
+
         if asrGuiState.isVisible then
             asrGuiState.isVisible = false
             linesWindow:setVisible(false,true)
+            
         else
             asrGuiState.isVisible = true
             linesWindow:setVisible(true,true)
@@ -3557,7 +3548,7 @@ function asrGui.guiUpdate()
         asrGuiState.rebuildCargoGroupsMembersTable = true
     end
 
-    if not asrGuiState.initDone and asrState[asrEnum.UPDATE_TIMESTAMP] ~= nil then
+    if not asrGuiState.initDone then
         guiInit()
         rebuildLinesTable()
         rebuildLineSettingsLayout()
