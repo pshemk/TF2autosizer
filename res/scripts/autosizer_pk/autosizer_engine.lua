@@ -1831,7 +1831,7 @@ local function updateLineTrainsInfo(lineId)
     if validityStatusChange then
         engineState[asrEnum.STATUS][asrEnum.status.LINES_VERSION] = engineState[asrEnum.STATUS][asrEnum.status.LINES_VERSION] + 1
     end
-
+    engineState[asrEnum.UPDATE_TIMESTAMP] = asrHelper.getUniqueTimestamp()
 end
 
 local function updateTrainsInfo()
@@ -2177,16 +2177,11 @@ function asrEngine.update()
                 checkTrainsCapacity()
                 -- log("engine: resuming updateSupplyChains coroutine")
                 coroutine.resume(coroutines.updateSupplyChains)
-                -- updateSupplyChains(true)
         
                 validateCargoGroups()
-                -- asrEngine.updateSupplyChains()
-                -- asrEngine.updateLinesInfo()
-                -- asrEngine.updateTrainsInfo()
                 engineState[asrEnum.UPDATE_TIMESTAMP] = asrHelper.getUniqueTimestamp()
             end
 
-            -- asrEngine.processTrainInfo()
             -- periodic refresh of the names of the lines - even less frequent 
             if flags.refreshEnabled and flags.refreshNames then
                 log("engine: checking names")
