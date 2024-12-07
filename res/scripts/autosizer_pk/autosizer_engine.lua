@@ -1129,6 +1129,7 @@ local function generateTrainConfig(trainId, lineId, stopIndex)
         if engineState[asrEnum.SETTINGS] and engineState[asrEnum.SETTINGS][asrEnum.settings.MINIMAL_WAGON_COUNT] and 
             requiredWagonCount < engineState[asrEnum.SETTINGS][asrEnum.settings.MINIMAL_WAGON_COUNT] then
                 requiredWagonCount = engineState[asrEnum.SETTINGS][asrEnum.settings.MINIMAL_WAGON_COUNT]
+                log("engine: train " .. getTrainName(trainId) .. " train would be shorter than minimal, adding wagons")
             end
         
         local trainDetails = api.engine.getComponent(tonumber(trainId), api.type.ComponentType.TRANSPORT_VEHICLE)
