@@ -101,6 +101,62 @@ local function storeTimings(functionName, runDuration)
     if #engineState[asrEnum.TIMINGS][functionName] >= 20 then table.remove(engineState[asrEnum.TIMINGS][functionName], 1) end
 end
 
+local function getModelDetails(modelId)
+    local cargoCapacities = {}
+    local foundCompartments = false
+    local passengers = false
+
+    if engineState[asrEnum.MODEL_CACHE][tostring(modelId)] ~= nil then
+        return engineState[asrEnum.MODEL_CACHE][tostring(modelId)]
+    else
+        local modelDetails = api.res.modelRep.get(tonumber(modelId))
+        -- log("checking modelId: " .. modelId)
+    
+        -- find the smallest capacity per vehicle, this will be the defaul
+        local capacity = 9999
+        for i = 1, #modelDetails.metadata.transportVehicle.compartments do
+            for j = 1, #modelDetails.metadata.transportVehicle.compartments[i].loadConfigs do 
+                for k = 1, #modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries do
+                    if string.upper(modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k].type) ~= "PASSENGERS" then
+                        cargoCapacities[string.upper(modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k].type)] = modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k].capacity
+                        -- log("model: " .. i .. ":" .. j .. ":" .. k .. " ->" )
+                        -- asrHelper.tprint(modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k])
+                        foundCompartments = true
+                        if modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k].capacity < capacity then capacity = modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k].capacity end
+                        -- log(string.upper(modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k].type))
+                    else
+                        passengers = true
+                    end
+                end
+            end
+        end
+        if modelDetails.metadata.railVehicle and not passengers then -- only count trains with no passenger capability
+            if not foundCompartments then
+                engineState[asrEnum.MODEL_CACHE][tostring(modelId)] = {
+                    [asrEnum.modelCache.TYPE] = "engine", 
+                    [asrEnum.modelCache.CAPACITIES] = {},
+                    [asrEnum.modelCache.CAPACITY] = 0,
+                    [asrEnum.modelCache.LENGTH] = modelDetails.boundingInfo.bbMax.x - modelDetails.boundingInfo.bbMin.x,
+                    [asrEnum.modelCache.COMPARTMENTS] = 0,
+                }
+            else 
+                engineState[asrEnum.MODEL_CACHE][tostring(modelId)] = {
+                    [asrEnum.modelCache.TYPE] = "wagon",
+                    [asrEnum.modelCache.CAPACITIES] = cargoCapacities,
+                    [asrEnum.modelCache.CAPACITY] = capacity * #modelDetails.metadata.transportVehicle.compartments,
+                    [asrEnum.modelCache.LENGTH] = modelDetails.boundingInfo.bbMax.x - modelDetails.boundingInfo.bbMin.x,
+                    [asrEnum.modelCache.COMPARTMENTS] =  #modelDetails.metadata.transportVehicle.compartments
+                }
+            end
+        else 
+            -- log("engine: not a rail vehicle")
+        end
+        -- log("engine: modelId:" .. modelId)
+        -- asrHelper.tprint(engineState[asrEnum.MODEL_CACHE][modelId])
+        return engineState[asrEnum.MODEL_CACHE][tostring(modelId)]
+    end    
+end
+
 
 local function enableLine(lineId)
     -- log("trying to enable line " .. lineId)
@@ -161,6 +217,12 @@ local function checkLineConfig(lineId)
             if not prevModelId then
                 prevModelId = modelId
             else
+                if not engineState[asrEnum.MODEL_CACHE][tostring(prevModelId)] then 
+                    getModelDetails(engineState[asrEnum.MODEL_CACHE][tostring(prevModelId)])
+                end
+                if not engineState[asrEnum.MODEL_CACHE][tostring(modelId)] then 
+                    getModelDetails(engineState[asrEnum.MODEL_CACHE][tostring(modelId)])
+                end
                 -- log("engine: model comparison: " .. prevModelId .. " and " .. modelId)
                 if not asrHelper.tablesAreIdentical(engineState[asrEnum.MODEL_CACHE][tostring(prevModelId)][asrEnum.modelCache.CAPACITIES], engineState[asrEnum.MODEL_CACHE][tostring(modelId)][asrEnum.modelCache.CAPACITIES]) then
                     identicalWagons = false
