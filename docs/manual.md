@@ -261,7 +261,7 @@ One other consideration is the number of API calls made by the mod to the game. 
   
 3. At any given station all trains are configured to the same length by default (actual train might be longer if the station is configured for waiting cargo pickup), which can lead to overprovisioning of the line capacity. Lower numbers of longer trains on the line allows for better accuracy.
 
-4. Multiheaded trains are currently not supported. If they're used on the lines the mod will continuously underprovision the number of wagons by the number of the extra engines.
+4. Multiheaded trains are supported, but all engines must be at the front of the train, otherwise they might get deleted when the train is scaled down.
 
 5. If a train picks up multiple types of cargo at the station some capacity might be lost due to wagons not loading fully. This generally shouldn't be an issue, as some overprovisioning happens naturally.
 
