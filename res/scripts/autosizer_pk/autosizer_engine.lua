@@ -1510,6 +1510,29 @@ local function checkTrainsPositions()
                     engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IN_STATION] = true
                     engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.ARRIVAL_TIMESTAMP] = getGameTime()
 
+                    -- check if scheduler is enabled for this station
+                    if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.SCHEDULER_ENABLED] then
+                        if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] then
+                            if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_COUNT] and engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME] then 
+                                local timeBetweenTrains = engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME]
+                                local scheduledDepartureTime =  engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] + timeBetweenTrains
+                                log ("engine: train " .. getTrainName(trainId) .. " frequency is: " .. timeBetweenTrains) 
+                                log ("engine: train " .. getTrainName(trainId) .. " last train was here: " .. getGameTime() - engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] .. "s ago") 
+                                if scheduledDepartureTime <= getGameTime() then
+                                    -- we're already too late, record the time 
+                                    log ("engine: train " .. getTrainName(trainId) .. " is already late, won't wait") 
+                                else
+                                    -- record expected departure time 
+                                    engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.DEPART_AT] = scheduledDepartureTime
+                                    log ("engine: train " .. getTrainName(trainId) .. " will wait here") 
+                                end
+                            else 
+                                log ("engine: train " .. getTrainName(trainId) .. " either no time or no count, can't schedule departure") 
+                            end
+                        else 
+                            log ("engine: train " .. getTrainName(trainId) .. " no unload timestamp") 
+                        end
+                    end
                     if stage == "arrival" then
                         local replaceCmd = api.cmd.make.replaceVehicle(tonumber(trainId), replacementConfig)
                         engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACED] = true
@@ -1543,13 +1566,39 @@ local function checkTrainsPositions()
                         end)
                     end
                 end
+                if trainCurrentInfo.timeUntilLoad <= 0.25 and not trainPrevInfo[asrEnum.trackedTrain.DEPART_AT] and not trainPrevInfo[asrEnum.trackedTrain.UNLOAD_TIMESTAMP_RECORDED] then
+                    engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] = getGameTime()
+                    engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.UNLOAD_TIMESTAMP_RECORDED] = true 
+                    log ("engine: train " .. getTrainName(trainId) .. " storing unload timestamp")
+                end    
+            end
+
+            if trainPrevInfo[asrEnum.trackedTrain.DEPART_AT] then
+                if trainPrevInfo[asrEnum.trackedTrain.DEPART_AT] < getGameTime() and not trainPrevInfo[asrEnum.trackedTrain.IS_STOPPED] then
+                    local stopCmd = api.cmd.make.setUserStopped(tonumber(trainId), true)
+                    api.cmd.sendCommand(stopCmd, function ()
+                        log ("engine: train " .. getTrainName(trainId) .. " is waiting  at " .. trainCurrentInfo.stopIndex)
+                        engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IS_STOPPED] = true
+                    end)
+                end
+            end
+
+            -- check if the stopped train should leave the station 
+            if trainPrevInfo[asrEnum.trackedTrain.IS_STOPPED] and trainPrevInfo[asrEnum.trackedTrain.DEPART_AT] <= getGameTime()  then      
+                local startCmd = api.cmd.make.setUserStopped(tonumber(trainId), false)
+                api.cmd.sendCommand(startCmd, function ()
+                    log ("engine: train " .. getTrainName(trainId) .. " is starting again ")
+                    engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IS_STOPPED] = false
+                    trainPrevInfo[asrEnum.trackedTrain.DEPART_AT] = nil
+                    engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] = getGameTime()
+                end)
             end
 
             -- train is leaving
             if trainCurrentInfo.state == api.type.enum.TransportVehicleState.EN_ROUTE and trainPrevInfo[asrEnum.trackedTrain.STATE] == api.type.enum.TransportVehicleState.AT_TERMINAL then
                 log("engine: train " .. getTrainName(trainId) .. " is leaving a station " .. " heading to index: " .. trainCurrentInfo.stopIndex )
 
-                if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACE_ON] == "departure" and not trainPrevInfo[asrEnum.trackedTrain.REPLACED]  then 
+                if trainPrevInfo[asrEnum.trackedTrain.REPLACE_ON] == "departure" and not trainPrevInfo[asrEnum.trackedTrain.REPLACED]  then 
                     if not trainConfigCache[tostring(trainId)] then
                         -- config might got lost during save/restore
                         trainConfigCache[tostring(trainId)] = generateTrainConfig(trainId, trainCurrentInfo.line, trainPrevInfo[asrEnum.trackedTrain.STOP_INDEX] + 1)
@@ -1762,6 +1811,7 @@ local function getLineTrainSummary(lineId)
         -- trainList = {},
     }
     local lineVehicles = api.engine.system.transportVehicleSystem.getLineVehicles(tonumber(lineId))
+    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_COUNT] = #lineVehicles
     for _, trainId in  pairs(lineVehicles) do
         local models = getTrainModels(trainId)
         if models ~= nil then

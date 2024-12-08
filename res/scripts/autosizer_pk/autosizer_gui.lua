@@ -57,6 +57,7 @@ local i18Strings =  {
     disabled_for_line = _("disabled_for_line"),
     enable_debug = _("enable_debug"),
     enable_timings = _("enable_timings"),
+    enable_scheduler = _("enable_scheduler"),
     enabled = _("enabled"),
     fixed_amount = _("fixed_amount"),
     in_use_cant_delete = _("in_use_cant_delete"),
@@ -76,6 +77,7 @@ local i18Strings =  {
     rename_cargo_group = _("rename_cargo_group"),
     rename_shipping_contract = _("rename_shipping_contract"),
     settings = _("settings"),
+    schedule_departures = _("schedule_departures"),
     shipping_contract = _("shipping_contract"),
     stations = _("stations"),
     status_configured = _("status_configured"),
@@ -1176,6 +1178,73 @@ local function rebuildLineSettingsLayout()
 
                     end)
                     amountSelectionTable:addRow({capacityAdjustmentCheckBox, capacityAdjustmentLabel, capacityAdjustmentSelectorWrapper})
+
+                    if asrState[asrEnum.SETTINGS][asrEnum.settings.SCHEDULER_ENABLED] then 
+                        local schedulerCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
+                        schedulerCheckBox:setId("asr.schedulerCheckbox-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                        local schedulerLabel = api.gui.comp.TextView.new(i18Strings.enable_scheduler)
+                        -- schedulerLabel:setTooltip(i18Strings.adjust_capacity_tip)
+
+                        -- local capacityAdjustmentSelectorLayout = api.gui.layout.BoxLayout.new("HORIZONTAL");
+                        -- local capacityAdjustmentSelectorWrapper = api.gui.comp.Component.new("asr.capacityAdjustmentWrapper")
+                        -- capacityAdjustmentSelectorWrapper:setLayout(capacityAdjustmentSelectorLayout)
+
+                        -- local capacityAdjustmentSelectorSlider = api.gui.comp.Slider.new(true)
+                        -- local capacityAdjustmentSelectorValue = api.gui.comp.TextView.new("")
+                        -- if station[asrEnum.station.CAPACITY_ADJUSTMENT_VALUE] ~= nil then
+                        --     capacityAdjustmentSelectorSlider:setDefaultValue(tonumber(station[asrEnum.station.CAPACITY_ADJUSTMENT_VALUE])/5)
+                        --     capacityAdjustmentSelectorSlider:setValue(tonumber(station[asrEnum.station.CAPACITY_ADJUSTMENT_VALUE])/5, false)
+                        --     capacityAdjustmentSelectorValue:setText(tostring(station[asrEnum.station.CAPACITY_ADJUSTMENT_VALUE]) .. "%")
+                        -- else
+                        --     capacityAdjustmentSelectorSlider:setDefaultValue(0)
+                        --     capacityAdjustmentSelectorSlider:setValue(0, false)
+                        --     capacityAdjustmentSelectorValue:setText("0%")
+                        -- end
+                        -- capacityAdjustmentSelectorSlider:setMaximum(6)
+                        -- capacityAdjustmentSelectorSlider:setMinimum(-6)
+                        -- -- capacityAdjustmentSelectorSlider:setStep(10)
+                        -- capacityAdjustmentSelectorSlider:setMinimumSize(api.gui.util.Size.new(150, 20))
+                        -- capacityAdjustmentSelectorSlider:setMaximumSize(api.gui.util.Size.new(150, 20))
+                        -- capacityAdjustmentSelectorSlider:onValueChanged(function (value) 
+                        --     sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config  = { [asrEnum.station.CAPACITY_ADJUSTMENT_VALUE] = tonumber(value)*5}})                        
+                        --     capacityAdjustmentSelectorValue:setText(tostring(value*5).."%")
+                        -- end)
+                        -- capacityAdjustmentSelectorLayout:addItem(capacityAdjustmentSelectorSlider)
+                        -- capacityAdjustmentSelectorLayout:addItem(capacityAdjustmentSelectorValue)
+
+                        if station[asrEnum.station.SCHEDULER_ENABLED] == true then
+                            schedulerCheckBox:setSelected(true, false)
+                            -- capacityAdjustmentSelectorSlider:setEnabled(true)
+                            -- capacityAdjustmentSelectorSlider:setVisible(true, false)
+                            -- capacityAdjustmentSelectorValue:setEnabled(true)
+                            -- capacityAdjustmentSelectorValue:setVisible(true, false)
+                        else
+                            schedulerCheckBox:setSelected(false, false)
+                            -- capacityAdjustmentSelectorSlider:setEnabled(false)
+                            -- capacityAdjustmentSelectorSlider:setVisible(false, false)
+                            -- capacityAdjustmentSelectorValue:setEnabled(false)
+                            -- capacityAdjustmentSelectorValue:setVisible(false, false)
+                        end
+                        schedulerCheckBox:onToggle(function (checked)
+                            if checked then
+                                sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config = { [asrEnum.station.SCHEDULER_ENABLED] = true  }})
+                                -- capacityAdjustmentSelectorSlider:setEnabled(true)
+                                -- capacityAdjustmentSelectorSlider:setVisible(true, false)
+                                -- capacityAdjustmentSelectorValue:setEnabled(true)
+                                -- capacityAdjustmentSelectorValue:setVisible(true, false)
+                            else
+                                sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config = { [asrEnum.station.SCHEDULER_ENABLED] = false  }})
+                                -- capacityAdjustmentSelectorSlider:setEnabled(false)
+                                -- capacityAdjustmentSelectorSlider:setVisible(false, false)
+                                -- capacityAdjustmentSelectorValue:setEnabled(false)
+                                -- capacityAdjustmentSelectorValue:setVisible(false, false)
+                            end
+                            asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
+
+                        end)
+                        amountSelectionTable:addRow({schedulerCheckBox, schedulerLabel, api.gui.comp.Component.new("filler")})
+                    end
+
 
                     amountSelectionIndustryShippingCheckBox:onToggle(function (checked) 
                         setToggle("amountSelection", "IndustryShipping", stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId, checked)
@@ -3293,6 +3362,24 @@ local function buildMainWindow()
     trainLengthLayout:addItem(trainLengthTextInput)
     trainLengthLayout:addItem(api.gui.comp.TextView.new("m"))
     settingsTable:addRow({trainLengthLabel, trainLengthWrapper, MinimalTrainSizeFiller})
+
+    local enableSchedulerLabel = api.gui.comp.TextView.new(i18Strings.enable_scheduler)
+    local enableSchedulerCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
+    enableSchedulerCheckBox:setId("asr.schedulerEnabled")
+    if asrState[asrEnum.SETTINGS] and asrState[asrEnum.SETTINGS][asrEnum.settings.SCHEDULER_ENABLED] then
+        enableSchedulerCheckBox:setSelected(true, false)
+    else
+        enableSchedulerCheckBox:setSelected(false, false)
+    end
+    enableSchedulerCheckBox:setStyleClassList({"asrCheckbox"})
+    enableSchedulerCheckBox:onToggle(function (checked)
+        if checked then
+            sendEngineCommand("asrSettings", { property = asrEnum.settings.SCHEDULER_ENABLED, value = true })
+        else
+            sendEngineCommand("asrSettings", { property = asrEnum.settings.SCHEDULER_ENABLED, value = false })
+        end
+    end)    
+    settingsTable:addRow({enableSchedulerLabel, enableSchedulerCheckBox,api.gui.comp.TextView.new("")})
 
     local enableTimingsLabel = api.gui.comp.TextView.new(i18Strings.enable_timings)
     local enableTimingsCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )

@@ -44,6 +44,7 @@ asrEnum.line.STATUS_MESSAGE                     = 10
 asrEnum.line.SETTINGS                           = 11
 asrEnum.line.LINE_ID                            = 12
 asrEnum.line.ALWAYS_TRACK                       = 13
+asrEnum.line.TRAIN_COUNT                        = 14
 
 -- LINE STATION
 asrEnum.station                                 = {}
@@ -66,6 +67,9 @@ asrEnum.station.SHIPPING_CONTRACT_CARGO_ID      = 16
 asrEnum.station.CARGO_GROUP_ID                  = 17
 asrEnum.station.LENGTH_WARNING                  = 18
 asrEnum.station.STOP_DURATION                   = 19
+asrEnum.station.SCHEDULER_ENABLED               = 20
+asrEnum.station.UNLOAD_TIMESTAMP                = 21
+
 
 -- LINE VEHICLES
 asrEnum.vehicle                                 = {}
@@ -140,6 +144,7 @@ asrEnum.settings.TRAIN_LENGTH                   = 1
 asrEnum.settings.EXTRA_CAPACITY                 = 2
 asrEnum.settings.ENABLE_TRAIN_PURCHASE          = 3
 asrEnum.settings.MINIMAL_WAGON_COUNT            = 4
+asrEnum.settings.SCHEDULER_ENABLED              = 5
 
 -- TRACKED TRAINS
 asrEnum.trackedTrain                            = {}
@@ -153,7 +158,9 @@ asrEnum.trackedTrain.STOP_INDEX                 = 7
 asrEnum.trackedTrain.DEPARTURE_TIMESTAMP        = 8
 asrEnum.trackedTrain.GENERATED_CONFIG           = 9
 asrEnum.trackedTrain.REPLACE_ON                 = 10
-asrEnum.trackedTrain.SECTION_TIMES              = 11
+asrEnum.trackedTrain.DEPART_AT                  = 11
+asrEnum.trackedTrain.UNLOAD_TIMESTAMP_RECORDED  = 12
+asrEnum.trackedTrain.IS_STOPPED                 = 13
 
 
 -- CONSUMER TYPES
