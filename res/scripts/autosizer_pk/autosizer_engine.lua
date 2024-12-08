@@ -16,6 +16,9 @@ local consumerCache = {}
 -- local cache for train configs
 local trainConfigCache = {}
 
+-- version of the state, in case of breaking changes
+
+local globalStateVersion = 2
 -- coroutines
 
 local coroutines = {
@@ -995,10 +998,10 @@ local function refreshLinesCargoAmounts()
                                     engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.CARGO_AMOUNT] = stationConfig[asrEnum.station.FIXED_AMOUNT_VALUE]
                                 end
                             end
-                        end
-                        if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.CARGO_AMOUNT] and 
-                            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.CARGO_AMOUNT] == 0 then
-                                alwaysTrack = true
+                            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.CARGO_AMOUNT] and 
+                                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.CARGO_AMOUNT] == 0 then
+                                    alwaysTrack = true
+                            end
                         end
                     end
                     if alwaysTrack then
@@ -2239,6 +2242,10 @@ function asrEngine.update()
         end
         if engineState[asrEnum.MODEL_CACHE] == nil then
             engineState[asrEnum.MODEL_CACHE] = {}
+        end
+        if engineState[asrEnum.STATUS][asrEnum.status.STATE_VERSION] == nil then
+            print("engine: no previous state version, using current of: " .. globalStateVersion)
+            engineState[asrEnum.STATUS][asrEnum.status.STATE_VERSION] = globalStateVersion
         end
 
 

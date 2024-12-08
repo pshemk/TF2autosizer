@@ -27,6 +27,7 @@ asrEnum.status.SHIPPING_CONTRACTS_VERSION       = 7
 asrEnum.status.CARGO_GROUPS_VERSION             = 8
 asrEnum.status.CARGO_GROUPS_MEMBERS_VERSION     = 9
 asrEnum.status.GUI_DEBUG                        = 10
+asrEnum.status.STATE_VERSION                    = 10
 
 -- LINES
 asrEnum.line                                    = {}
