@@ -1963,7 +1963,7 @@ local function rebuildShippingContractsLayout()
                             asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])][asrEnum.industry.SUPPLIERS][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CARGO_ID])] then 
                             suppliers = asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])][asrEnum.industry.SUPPLIERS][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CARGO_ID])]
                         end
-                        if suppliers then 
+                        if suppliers ~= nil then 
                             for _, industryId in pairs(suppliers) do 
                                 table.insert(supplierIndustries, {
                                     cargoId = asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CARGO_ID],
@@ -2082,7 +2082,7 @@ local function rebuildShippingContractsLayout()
                             asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])][asrEnum.industry.CONSUMERS][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CARGO_ID])] then
                            consumers = asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])][asrEnum.industry.CONSUMERS][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CARGO_ID])]
                         end
-                        if consumers then 
+                        if consumers ~= nil then 
                             for _, industryId in pairs(consumers) do 
                                 table.insert(consumerIndustries, {
                                     cargoId = asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CARGO_ID],
