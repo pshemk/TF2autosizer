@@ -13,6 +13,7 @@ asrEnum.TRACKED_TRAINS                          = 7
 asrEnum.CHECKED_TRAINS                          = 8
 asrEnum.SHIPPING_CONTRACTS                      = 9
 asrEnum.CARGO_GROUPS                            = 10
+asrEnum.MODEL_CACHE                             = 11
 
 -- STATUS
 asrEnum.status                                  = {}

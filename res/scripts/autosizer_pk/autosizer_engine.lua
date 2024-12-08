@@ -7,7 +7,7 @@ local asrEngine = {}
 local engineState = {}
 
 -- local cache for some model properties, to avoid api calls
-local modelCache = {}
+-- local modelCache = {}
 
 -- local cache for industries and buildings to avoid api calls
 local consumerCache = {}
@@ -159,7 +159,7 @@ local function checkLineConfig(lineId)
                 prevModelId = modelId
             else
                 -- log("engine: model comparison: " .. prevModelId .. " and " .. modelId)
-                if not asrHelper.tablesAreIdentical(modelCache[tostring(prevModelId)][asrEnum.modelCache.CAPACITIES], modelCache[tostring(modelId)][asrEnum.modelCache.CAPACITIES]) then
+                if not asrHelper.tablesAreIdentical(engineState[asrEnum.MODEL_CACHE][tostring(prevModelId)][asrEnum.modelCache.CAPACITIES], engineState[asrEnum.MODEL_CACHE][tostring(modelId)][asrEnum.modelCache.CAPACITIES]) then
                     identicalWagons = false
                 end
             end
@@ -1090,7 +1090,7 @@ local function generateTrainConfig(trainId, lineId, stopIndex)
         end
 
 
-        local requiredWagonCount = math.ceil(capacityScaleFactor* travelTime / 720 * cargoAmount / modelCache[tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][1])][asrEnum.modelCache.CAPACITY])
+        local requiredWagonCount = math.ceil(capacityScaleFactor* travelTime / 720 * cargoAmount / engineState[asrEnum.MODEL_CACHE][tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][1])][asrEnum.modelCache.CAPACITY])
         local additionalWagonCount = 0
         local stage -- tells when to carry out the replacement
 
@@ -1099,7 +1099,7 @@ local function generateTrainConfig(trainId, lineId, stopIndex)
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.WAITING_CARGO_VALUE] ~= nil and 
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.WAITING_CARGO_VALUE] > 0 then 
 
-            local requiredCapacity = requiredWagonCount *  modelCache[tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][1])][asrEnum.modelCache.CAPACITY]
+            local requiredCapacity = requiredWagonCount *  engineState[asrEnum.MODEL_CACHE][tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][1])][asrEnum.modelCache.CAPACITY]
 
             -- check how much cargo is waiting for this train
             local cargoEntities = api.engine.system.simCargoSystem.getSimCargosForLine(tonumber(lineId))
@@ -1119,7 +1119,7 @@ local function generateTrainConfig(trainId, lineId, stopIndex)
             log("engine: train " .. getTrainName(trainId) .. " total cargo waiting at " .. stopIndex .. " is " .. cargoEntityCounter)
             if cargoEntityCounter > requiredCapacity then 
                 -- extra wagons needed
-                additionalWagonCount = math.ceil((cargoEntityCounter - requiredCapacity) * engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.WAITING_CARGO_VALUE]/100/modelCache[tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][1])][asrEnum.modelCache.CAPACITY])
+                additionalWagonCount = math.ceil((cargoEntityCounter - requiredCapacity) * engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.WAITING_CARGO_VALUE]/100/engineState[asrEnum.MODEL_CACHE][tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][1])][asrEnum.modelCache.CAPACITY])
                 log("engine: train " .. getTrainName(trainId) .. " adding extra " .. additionalWagonCount .. " wagon(s)")
             end
         end
@@ -1170,14 +1170,14 @@ local function generateTrainConfig(trainId, lineId, stopIndex)
             local vehicleConfig = api.type.TransportVehiclePart.new()
             local vehiclePart = api.type.VehiclePart.new()
 
-            -- log("engine: train " .. getTrainName(trainId) .. " copying modelId: " .. vehicle.part.modelId)
+            log("engine: train " .. getTrainName(trainId) .. " copying modelId: " .. vehicle.part.modelId)
             autoLoadConfig = {}
             loadConfig = {}
-            if modelCache[tostring(vehicle.part.modelId)][asrEnum.modelCache.COMPARTMENTS] == 0 then 
+            if engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)][asrEnum.modelCache.COMPARTMENTS] == 0 then 
                 autoLoadConfig = {1}
                 loadConfig = {0}
             else 
-                for i=1, modelCache[tostring(vehicle.part.modelId)][asrEnum.modelCache.COMPARTMENTS] do 
+                for i=1, engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)][asrEnum.modelCache.COMPARTMENTS] do 
                     table.insert(autoLoadConfig, 1)
                     table.insert(loadConfig, 0)
                 end
@@ -1191,12 +1191,12 @@ local function generateTrainConfig(trainId, lineId, stopIndex)
             vehicleConfig.targetMaintenanceState = vehicle.targetMaintenanceState
             vehicleConfig.autoLoadConfig = autoLoadConfig
 
-            if trainLength + modelCache[tostring(vehicle.part.modelId)][asrEnum.modelCache.LENGTH] < maxTrainLength then
+            if trainLength + engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)][asrEnum.modelCache.LENGTH] < maxTrainLength then
                 trainConfig.vehicles[vehicleCounter] = vehicleConfig
                 trainConfig.vehicleGroups[vehicleCounter] = 1
-                trainLength = trainLength + modelCache[tostring(vehicle.part.modelId)][asrEnum.modelCache.LENGTH]
+                trainLength = trainLength + engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)][asrEnum.modelCache.LENGTH]
                 vehicleCounter = vehicleCounter + 1
-                if vehicleCounter > requiredWagonCount then
+                if vehicleCounter > requiredWagonCount + 1 then
                     -- log("engine: train " .. getTrainName(trainId) .. " train copy, got to " .. (vehicleCounter - 1 ) )
                     break
                 end
@@ -1207,22 +1207,22 @@ local function generateTrainConfig(trainId, lineId, stopIndex)
         end
 
         -- if any more wagons are required - add them based on what's been discovered  in other trains on the line
+        math.randomseed(os.time())        
         for i = vehicleCounter, requiredWagonCount + 1 do -- off by 1, for the engine 
             local vehicleConfig = api.type.TransportVehiclePart.new()
             local vehiclePart = api.type.VehiclePart.new()
 
-            math.randomseed(os.time())
             local modelSeq = math.random(#engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS])
-            -- log("engine: train " .. getTrainName(trainId) .. " adding new modelId: " .. engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq])
+            log("engine: train " .. getTrainName(trainId) .. " adding new modelId: " .. engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq] .. " using seq of: " .. modelSeq)
 
             autoLoadConfig = {}
             loadConfig = {}
-            if modelCache[engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq]] then
-                if modelCache[engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq]][asrEnum.modelCache.COMPARTMENTS] == 0 then 
+            if engineState[asrEnum.MODEL_CACHE][tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq])] then
+                if engineState[asrEnum.MODEL_CACHE][tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq])][asrEnum.modelCache.COMPARTMENTS] == 0 then 
                     autoLoadConfig = {1}
                     loadConfig = {0}
                 else
-                    for j=1, modelCache[engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq]][asrEnum.modelCache.COMPARTMENTS] do
+                    for j=1, engineState[asrEnum.MODEL_CACHE][tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq])][asrEnum.modelCache.COMPARTMENTS] do
                         table.insert(autoLoadConfig, 1)
                         table.insert(loadConfig, 0)
                     end
@@ -1232,8 +1232,8 @@ local function generateTrainConfig(trainId, lineId, stopIndex)
                 vehiclePart.loadConfig = loadConfig
                 vehicleConfig.part = vehiclePart
                 vehicleConfig.autoLoadConfig = autoLoadConfig
-                if trainLength + modelCache[tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq])][asrEnum.modelCache.LENGTH] < maxTrainLength then
-                    trainLength = trainLength + modelCache[tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq])][asrEnum.modelCache.LENGTH]
+                if trainLength + engineState[asrEnum.MODEL_CACHE][tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq])][asrEnum.modelCache.LENGTH] < maxTrainLength then
+                    trainLength = trainLength + engineState[asrEnum.MODEL_CACHE][tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq])][asrEnum.modelCache.LENGTH]
                     trainConfig.vehicles[i] = vehicleConfig
                     trainConfig.vehicleGroups[i] = 1
                 else
@@ -1242,7 +1242,7 @@ local function generateTrainConfig(trainId, lineId, stopIndex)
                 end
             else
                 print("engine: train " .. getTrainName(trainId) .. " issue getting details of wagon no: " .. modelSeq)
-                return
+
             end
         end
 
@@ -1322,20 +1322,20 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
             end
     
             for _, vehicle in pairs(trainVehicles) do
-                if modelCache[tostring(vehicle.part.modelId)] == nil then
+                if engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)] == nil then
                     print("engine: train " .. getTrainName(trainId) .. " no info about model: " .. vehicle.part.modelId .. " check not possible" )        
                     return nil
                 end
-                currentCapacity = currentCapacity + modelCache[tostring(vehicle.part.modelId)][asrEnum.modelCache.CAPACITY]
+                currentCapacity = currentCapacity + engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)][asrEnum.modelCache.CAPACITY]
             end
             
             -- required number of wagons 
             local modelId = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][1]
-            local requiredWagonCount = math.ceil(capacityScaleFactor * travelTime / 720 * stationConfig[asrEnum.station.CARGO_AMOUNT] / modelCache[tostring(modelId)][asrEnum.modelCache.CAPACITY])
+            local requiredWagonCount = math.ceil(capacityScaleFactor * travelTime / 720 * stationConfig[asrEnum.station.CARGO_AMOUNT] / engineState[asrEnum.MODEL_CACHE][tostring(modelId)][asrEnum.modelCache.CAPACITY])
             
             -- log("engine: train " .. getTrainName(trainId) .. " current capacity  is " .. currentCapacity .. ", wagon count: " .. currentWagonCount)
             if requiredWagonCount ~= currentWagonCount then
-                -- log("engine: train " .. getTrainName(trainId) .. " wagons required: " .. requiredWagonCount .. ", wagon capacity: " .. modelCache[tostring(modelId)][asrEnum.modelCache.CAPACITY] .. " using modelId: " .. modelId .. " travelTime: " .. travelTime)
+                -- log("engine: train " .. getTrainName(trainId) .. " wagons required: " .. requiredWagonCount .. ", wagon capacity: " .. engineState[asrEnum.MODEL_CACHE][tostring(modelId)][asrEnum.modelCache.CAPACITY] .. " using modelId: " .. modelId .. " travelTime: " .. travelTime)
                 -- log("engine: train " .. getTrainName(trainId) .. " requires a capacity correction at the next station")
                 return true
             else
@@ -1658,8 +1658,8 @@ local function getModelDetails(modelId)
     local foundCompartments = false
     local passengers = false
 
-    if modelCache[tostring(modelId)] ~= nil then
-        return modelCache[tostring(modelId)]
+    if engineState[asrEnum.MODEL_CACHE][tostring(modelId)] ~= nil then
+        return engineState[asrEnum.MODEL_CACHE][tostring(modelId)]
     else
         local modelDetails = api.res.modelRep.get(tonumber(modelId))
         -- log("checking modelId: " .. modelId)
@@ -1684,7 +1684,7 @@ local function getModelDetails(modelId)
         end
         if modelDetails.metadata.railVehicle and not passengers then -- only count trains with no passenger capability
             if not foundCompartments then
-                modelCache[tostring(modelId)] = {
+                engineState[asrEnum.MODEL_CACHE][tostring(modelId)] = {
                     [asrEnum.modelCache.TYPE] = "engine", 
                     [asrEnum.modelCache.CAPACITIES] = {},
                     [asrEnum.modelCache.CAPACITY] = 0,
@@ -1692,7 +1692,7 @@ local function getModelDetails(modelId)
                     [asrEnum.modelCache.COMPARTMENTS] = 0,
                 }
             else 
-                modelCache[tostring(modelId)] = {
+                engineState[asrEnum.MODEL_CACHE][tostring(modelId)] = {
                     [asrEnum.modelCache.TYPE] = "wagon",
                     [asrEnum.modelCache.CAPACITIES] = cargoCapacities,
                     [asrEnum.modelCache.CAPACITY] = capacity * #modelDetails.metadata.transportVehicle.compartments,
@@ -1704,8 +1704,8 @@ local function getModelDetails(modelId)
             -- log("engine: not a rail vehicle")
         end
         -- log("engine: modelId:" .. modelId)
-        -- asrHelper.tprint(modelCache[modelId])
-        return modelCache[tostring(modelId)]
+        -- asrHelper.tprint(engineState[asrEnum.MODEL_CACHE][modelId])
+        return engineState[asrEnum.MODEL_CACHE][tostring(modelId)]
     end    
 end
 
@@ -2067,7 +2067,7 @@ function asrEngine.handleEvent(id, params)
         asrHelper.tprint(engineState[asrEnum.CHECKED_TRAINS])
     elseif id == "asrDumpModelCache" then
         log("engine: dump model cache")
-        asrHelper.tprint(modelCache)        
+        asrHelper.tprint(engineState[asrEnum.MODEL_CACHE])
     elseif id == "asrDumpShippingContracts" then
         log("engine: dump shipping contracts")
         asrHelper.tprint(engineState[asrEnum.SHIPPING_CONTRACTS])
@@ -2231,6 +2231,10 @@ function asrEngine.update()
         if engineState[asrEnum.CARGO_GROUPS] == nil then
             engineState[asrEnum.CARGO_GROUPS] = {}
         end
+        if engineState[asrEnum.MODEL_CACHE] == nil then
+            engineState[asrEnum.MODEL_CACHE] = {}
+        end
+
 
         -- make sure previously stored lines are still valid
         updateLinesInfo()
