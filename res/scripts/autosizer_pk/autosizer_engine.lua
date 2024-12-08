@@ -1965,9 +1965,11 @@ end
 
 local function deleteCargoGroup(params)
     if params and params.cargoGroupId then 
-        for memberId, memberDetails in pairs(engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS]) do
-            if memberDetails[asrEnum.cargoGroupMember.TYPE] == "shippingContract" or memberDetails[asrEnum.cargoGroupMember.TYPE] == "cargoGroup" then
-                decreaseMemberInUseCounter(memberId, memberDetails[asrEnum.cargoGroupMember.TYPE])
+        if engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS] then 
+            for memberId, memberDetails in pairs(engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS]) do
+                if memberDetails[asrEnum.cargoGroupMember.TYPE] == "shippingContract" or memberDetails[asrEnum.cargoGroupMember.TYPE] == "cargoGroup" then
+                    decreaseMemberInUseCounter(memberId, memberDetails[asrEnum.cargoGroupMember.TYPE])
+                end
             end
         end
         engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)] = nil
