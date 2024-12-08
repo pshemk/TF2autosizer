@@ -2258,6 +2258,7 @@ function asrEngine.update()
         -- engineState[asrEnum.STATUS][asrEnum.status.DEBUG_ENABLED] = true
         -- engineState[asrEnum.STATUS][asrEnum.status.TIMINGS_ENABLED] = true
         flags.initDone = true
+        engineState[asrEnum.UPDATE_TIMESTAMP] = asrHelper.getUniqueTimestamp()
     end
 end
 
