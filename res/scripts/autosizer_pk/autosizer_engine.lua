@@ -221,10 +221,10 @@ local function checkLineConfig(lineId)
                 prevModelId = modelId
             else
                 if not engineState[asrEnum.MODEL_CACHE][tostring(prevModelId)] then 
-                    getModelDetails(engineState[asrEnum.MODEL_CACHE][tostring(prevModelId)])
+                    getModelDetails(tostring(prevModelId))
                 end
                 if not engineState[asrEnum.MODEL_CACHE][tostring(modelId)] then 
-                    getModelDetails(engineState[asrEnum.MODEL_CACHE][tostring(modelId)])
+                    getModelDetails(tostring(modelId))
                 end
                 -- log("engine: model comparison: " .. prevModelId .. " and " .. modelId)
                 if not asrHelper.tablesAreIdentical(engineState[asrEnum.MODEL_CACHE][tostring(prevModelId)][asrEnum.modelCache.CAPACITIES], engineState[asrEnum.MODEL_CACHE][tostring(modelId)][asrEnum.modelCache.CAPACITIES]) then
