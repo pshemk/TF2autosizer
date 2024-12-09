@@ -1185,6 +1185,7 @@ local function rebuildLineSettingsLayout()
                         local scheduleDeparturesCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
                         scheduleDeparturesCheckBox:setId("asr.scheduleDeparturesCheckbox-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
                         local scheduleDeparturesLabel = api.gui.comp.TextView.new(i18Strings.schedule_departures)
+                        scheduleDeparturesLabel:setId("asr.scheduleDeparturesLabel-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
 
                         if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_COUNT] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_COUNT] > 1 then
                             scheduleDeparturesLabel:setTooltip(i18Strings.schedule_departures_tip_on)
@@ -1202,9 +1203,10 @@ local function rebuildLineSettingsLayout()
                         if currentFrequency then 
                             if currentFrequency > 120 then 
                                 currentFrequencyText = "every " .. tostring(math.ceil(currentFrequency/60)) .. " min"
-                                currentFrequencyTip = math.floor(currentFrequency/60) .. " min " .. math.floor(currentFrequency - 60 * math.floor(currentFrequency/60)) .. " s"
-                            else
-                                currentFrequencyText = "every " .. math.ceil(currentFrequency) .. " s"
+                                currentFrequencyTip = math.floor(currentFrequency/60) .. " min " .. math.ceil(currentFrequency - 60 * math.floor(currentFrequency/60)) .. " s"
+                        else
+                                currentFrequencyText = "every " .. math.floor(currentFrequency) .. " s"
+                                currentFrequencyTip = math.floor(currentFrequency) .. " s"
                             end
                         end
 
@@ -1486,26 +1488,43 @@ local function rebuildLineSettingsLayout()
                         currentTotalAmountText:setText(tostring(currentValue))
                     end
 
-                    local currentFrequency = asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAVEL_TIME]
-                    local currentFrequencyText = ""
-                    local currentFrequencyTip
-                    if currentFrequency then 
-                        if currentFrequency > 120 then 
-                            currentFrequencyText = "every " .. tostring(math.ceil(currentFrequency/60)) .. " min"
-                            currentFrequencyTip = math.floor(currentFrequency/60) .. " min " .. math.floor(currentFrequency - 60 * math.floor(currentFrequency/60)) .. " s"
-                    else
-                            currentFrequencyText = "every " .. math.floor(currentFrequency) .. " s"
+                    if asrState[asrEnum.SETTINGS][asrEnum.settings.SCHEDULER_ENABLED] then 
+                        local scheduleDeparturesCheckBox = api.gui.util.getById("asr.scheduleDeparturesCheckbox-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                        local scheduleDeparturesLabel = api.gui.util.getById("asr.scheduleDeparturesLabel-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+
+                        if scheduleDeparturesCheckBox and scheduleDeparturesLabel then 
+                            if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_COUNT] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_COUNT] > 1 then
+                                scheduleDeparturesLabel:setTooltip(i18Strings.schedule_departures_tip_on)
+                                scheduleDeparturesCheckBox:setTooltip(i18Strings.schedule_departures_tip_on)
+                                scheduleDeparturesCheckBox:setEnabled(true)
+                            else
+                                scheduleDeparturesLabel:setTooltip(i18Strings.schedule_departures_tip_off)
+                                scheduleDeparturesCheckBox:setTooltip(i18Strings.schedule_departures_tip_off)
+                                scheduleDeparturesCheckBox:setEnabled(false)
+                            end
+                        end
+
+                        local currentFrequency = asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAVEL_TIME]
+                        local currentFrequencyText = ""
+                        local currentFrequencyTip
+                        if currentFrequency then 
+                            if currentFrequency > 120 then 
+                                currentFrequencyText = "every " .. tostring(math.ceil(currentFrequency/60)) .. " min"
+                                currentFrequencyTip = math.floor(currentFrequency/60) .. " min " .. math.ceil(currentFrequency - 60 * math.floor(currentFrequency/60)) .. " s"
+                            else
+                                currentFrequencyText = "every " .. math.floor(currentFrequency) .. " s"
+                                currentFrequencyTip = math.floor(currentFrequency) .. " s"
+                            end
+                        end
+
+                        local currentFrequencyLabel = api.gui.util.getById("asr.schedulerDeparturesFrequencyLabel" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                        if currentFrequencyLabel then 
+                            if currentFrequencyTip then
+                                currentFrequencyLabel:setTooltip(currentFrequencyTip)
+                            end
+                            currentFrequencyLabel:setText(currentFrequencyText)
                         end
                     end
-
-                    local currentFrequencyLabel = api.gui.util.getById("asr.schedulerDeparturesFrequencyLabel" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
-                    if currentFrequencyLabel then 
-                        if currentFrequencyTip then
-                            currentFrequencyLabel:setTooltip(currentFrequencyTip)
-                        end
-                        currentFrequencyLabel:setText(currentFrequencyText)
-                    end
-
                     asrGuiState.refreshCargoAmounts = false
                     
                 end
