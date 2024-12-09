@@ -4,7 +4,7 @@ local asrEnum = require "autosizer_pk/autosizer_enums"
 local asrEngine = {}
 
 
-local releaseVersion = "1.0.6"
+local releaseVersion = "1.0.8"
 
 -- the main state variable, stored in savefiles 
 local engineState = {}
