@@ -78,6 +78,8 @@ local i18Strings =  {
     rename_shipping_contract = _("rename_shipping_contract"),
     settings = _("settings"),
     schedule_departures = _("schedule_departures"),
+    schedule_departures_tip_off = _("schedule_departures_tip_off"),
+    schedule_departures_tip_on = _("schedule_departures_tip_on"),
     shipping_contract = _("shipping_contract"),
     stations = _("stations"),
     status_configured = _("status_configured"),
@@ -1180,69 +1182,57 @@ local function rebuildLineSettingsLayout()
                     amountSelectionTable:addRow({capacityAdjustmentCheckBox, capacityAdjustmentLabel, capacityAdjustmentSelectorWrapper})
 
                     if asrState[asrEnum.SETTINGS][asrEnum.settings.SCHEDULER_ENABLED] then 
-                        local schedulerCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
-                        schedulerCheckBox:setId("asr.schedulerCheckbox-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
-                        local schedulerLabel = api.gui.comp.TextView.new(i18Strings.enable_scheduler)
-                        -- schedulerLabel:setTooltip(i18Strings.adjust_capacity_tip)
+                        local scheduleDeparturesCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
+                        scheduleDeparturesCheckBox:setId("asr.scheduleDeparturesCheckbox-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                        local scheduleDeparturesLabel = api.gui.comp.TextView.new(i18Strings.schedule_departures)
 
-                        -- local capacityAdjustmentSelectorLayout = api.gui.layout.BoxLayout.new("HORIZONTAL");
-                        -- local capacityAdjustmentSelectorWrapper = api.gui.comp.Component.new("asr.capacityAdjustmentWrapper")
-                        -- capacityAdjustmentSelectorWrapper:setLayout(capacityAdjustmentSelectorLayout)
+                        if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_COUNT] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_COUNT] > 1 then
+                            scheduleDeparturesLabel:setTooltip(i18Strings.schedule_departures_tip_on)
+                            scheduleDeparturesCheckBox:setTooltip(i18Strings.schedule_departures_tip_on)
+                            scheduleDeparturesCheckBox:setEnabled(true)
+                        else
+                            scheduleDeparturesLabel:setTooltip(i18Strings.schedule_departures_tip_off)
+                            scheduleDeparturesCheckBox:setTooltip(i18Strings.schedule_departures_tip_off)
+                            scheduleDeparturesCheckBox:setEnabled(false)
+                        end
 
-                        -- local capacityAdjustmentSelectorSlider = api.gui.comp.Slider.new(true)
-                        -- local capacityAdjustmentSelectorValue = api.gui.comp.TextView.new("")
-                        -- if station[asrEnum.station.CAPACITY_ADJUSTMENT_VALUE] ~= nil then
-                        --     capacityAdjustmentSelectorSlider:setDefaultValue(tonumber(station[asrEnum.station.CAPACITY_ADJUSTMENT_VALUE])/5)
-                        --     capacityAdjustmentSelectorSlider:setValue(tonumber(station[asrEnum.station.CAPACITY_ADJUSTMENT_VALUE])/5, false)
-                        --     capacityAdjustmentSelectorValue:setText(tostring(station[asrEnum.station.CAPACITY_ADJUSTMENT_VALUE]) .. "%")
-                        -- else
-                        --     capacityAdjustmentSelectorSlider:setDefaultValue(0)
-                        --     capacityAdjustmentSelectorSlider:setValue(0, false)
-                        --     capacityAdjustmentSelectorValue:setText("0%")
-                        -- end
-                        -- capacityAdjustmentSelectorSlider:setMaximum(6)
-                        -- capacityAdjustmentSelectorSlider:setMinimum(-6)
-                        -- -- capacityAdjustmentSelectorSlider:setStep(10)
-                        -- capacityAdjustmentSelectorSlider:setMinimumSize(api.gui.util.Size.new(150, 20))
-                        -- capacityAdjustmentSelectorSlider:setMaximumSize(api.gui.util.Size.new(150, 20))
-                        -- capacityAdjustmentSelectorSlider:onValueChanged(function (value) 
-                        --     sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config  = { [asrEnum.station.CAPACITY_ADJUSTMENT_VALUE] = tonumber(value)*5}})                        
-                        --     capacityAdjustmentSelectorValue:setText(tostring(value*5).."%")
-                        -- end)
-                        -- capacityAdjustmentSelectorLayout:addItem(capacityAdjustmentSelectorSlider)
-                        -- capacityAdjustmentSelectorLayout:addItem(capacityAdjustmentSelectorValue)
+                        local currentFrequency = asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAVEL_TIME]
+                        local currentFrequencyText = ""
+                        local currentFrequencyTip
+                        if currentFrequency then 
+                            if currentFrequency > 120 then 
+                                currentFrequencyText = "every " .. tostring(math.ceil(currentFrequency/60)) .. " min"
+                                currentFrequencyTip = math.floor(currentFrequency/60) .. " min " .. math.floor(currentFrequency - 60 * math.floor(currentFrequency/60)) .. " s"
+                            else
+                                currentFrequencyText = "every " .. math.ceil(currentFrequency) .. " s"
+                            end
+                        end
+
+                        local currentFrequencyLabel = api.gui.comp.TextView.new(currentFrequencyText)
+                        currentFrequencyLabel:setId("asr.schedulerDeparturesFrequencyLabel" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                        if currentFrequencyTip then
+                            currentFrequencyLabel:setTooltip(currentFrequencyTip)
+                        end
 
                         if station[asrEnum.station.SCHEDULER_ENABLED] == true then
-                            schedulerCheckBox:setSelected(true, false)
-                            -- capacityAdjustmentSelectorSlider:setEnabled(true)
-                            -- capacityAdjustmentSelectorSlider:setVisible(true, false)
-                            -- capacityAdjustmentSelectorValue:setEnabled(true)
-                            -- capacityAdjustmentSelectorValue:setVisible(true, false)
+                            scheduleDeparturesCheckBox:setSelected(true, false)
+                            currentFrequencyLabel:setVisible(true, false)
                         else
-                            schedulerCheckBox:setSelected(false, false)
-                            -- capacityAdjustmentSelectorSlider:setEnabled(false)
-                            -- capacityAdjustmentSelectorSlider:setVisible(false, false)
-                            -- capacityAdjustmentSelectorValue:setEnabled(false)
-                            -- capacityAdjustmentSelectorValue:setVisible(false, false)
+                            scheduleDeparturesCheckBox:setSelected(false, false)
+                            currentFrequencyLabel:setVisible(false, false)
                         end
-                        schedulerCheckBox:onToggle(function (checked)
+                        scheduleDeparturesCheckBox:onToggle(function (checked)                            
                             if checked then
                                 sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config = { [asrEnum.station.SCHEDULER_ENABLED] = true  }})
-                                -- capacityAdjustmentSelectorSlider:setEnabled(true)
-                                -- capacityAdjustmentSelectorSlider:setVisible(true, false)
-                                -- capacityAdjustmentSelectorValue:setEnabled(true)
-                                -- capacityAdjustmentSelectorValue:setVisible(true, false)
+                                currentFrequencyLabel:setVisible(true, false)
                             else
                                 sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config = { [asrEnum.station.SCHEDULER_ENABLED] = false  }})
-                                -- capacityAdjustmentSelectorSlider:setEnabled(false)
-                                -- capacityAdjustmentSelectorSlider:setVisible(false, false)
-                                -- capacityAdjustmentSelectorValue:setEnabled(false)
-                                -- capacityAdjustmentSelectorValue:setVisible(false, false)
+                                currentFrequencyLabel:setVisible(false, false)
                             end
                             asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
 
                         end)
-                        amountSelectionTable:addRow({schedulerCheckBox, schedulerLabel, api.gui.comp.Component.new("filler")})
+                        amountSelectionTable:addRow({scheduleDeparturesCheckBox, scheduleDeparturesLabel, currentFrequencyLabel})
                     end
 
 
@@ -1495,6 +1485,27 @@ local function rebuildLineSettingsLayout()
                     if currentTotalAmountText then 
                         currentTotalAmountText:setText(tostring(currentValue))
                     end
+
+                    local currentFrequency = asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAVEL_TIME]
+                    local currentFrequencyText = ""
+                    local currentFrequencyTip
+                    if currentFrequency then 
+                        if currentFrequency > 120 then 
+                            currentFrequencyText = "every " .. tostring(math.ceil(currentFrequency/60)) .. " min"
+                            currentFrequencyTip = math.floor(currentFrequency/60) .. " min " .. math.floor(currentFrequency - 60 * math.floor(currentFrequency/60)) .. " s"
+                    else
+                            currentFrequencyText = "every " .. math.floor(currentFrequency) .. " s"
+                        end
+                    end
+
+                    local currentFrequencyLabel = api.gui.util.getById("asr.schedulerDeparturesFrequencyLabel" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                    if currentFrequencyLabel then 
+                        if currentFrequencyTip then
+                            currentFrequencyLabel:setTooltip(currentFrequencyTip)
+                        end
+                        currentFrequencyLabel:setText(currentFrequencyText)
+                    end
+
                     asrGuiState.refreshCargoAmounts = false
                     
                 end

@@ -15,11 +15,11 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 0,
+      minorVersion = 7,
       severityAdd = "NONE",
       severityRemove = "NONE",
       url = "https://github.com/pshemk/TF2autosizer",
-      tags = { "Script Mod", "Train resizer", "Traing Length", "Cargo", "Adjust", "Resize", "Wagon", "Train Station", "Locomotive", "Industry" },
+      tags = { "Script Mod",  "Wagon", "Train Station", "Locomotive", "Industry" },
        },
        runFn = function (settings, modParams) 
         -- addModifier("loadModel", autosizerModelLoader.createModelCallback(params))
