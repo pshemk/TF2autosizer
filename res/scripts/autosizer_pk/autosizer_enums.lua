@@ -158,9 +158,12 @@ asrEnum.trackedTrain.STOP_INDEX                 = 7
 asrEnum.trackedTrain.DEPARTURE_TIMESTAMP        = 8
 asrEnum.trackedTrain.GENERATED_CONFIG           = 9
 asrEnum.trackedTrain.REPLACE_ON                 = 10
-asrEnum.trackedTrain.DEPART_AT                  = 11
+asrEnum.trackedTrain.DELAY_DEPARTURE            = 11
 asrEnum.trackedTrain.UNLOAD_TIMESTAMP_RECORDED  = 12
 asrEnum.trackedTrain.IS_STOPPED                 = 13
+asrEnum.trackedTrain.WAGON_COUNT                = 14
+asrEnum.trackedTrain.WAIT_START_TIMESTAMP       = 15
+asrEnum.trackedTrain.WAIT_DURATION              = 16
 
 
 -- CONSUMER TYPES
