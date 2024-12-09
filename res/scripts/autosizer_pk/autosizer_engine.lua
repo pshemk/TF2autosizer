@@ -3,6 +3,9 @@ local asrEnum = require "autosizer_pk/autosizer_enums"
 
 local asrEngine = {}
 
+
+local releaseVersion = "1.0.6"
+
 -- the main state variable, stored in savefiles 
 local engineState = {}
 
@@ -2269,7 +2272,7 @@ function asrEngine.update()
 
     -- initial setup
     if not flags.initDone then
-        print("autosizer - initialising")
+        print("autosizer - initialising - version " .. releaseVersion) 
         -- check if we have the default settings
         if engineState[asrEnum.SETTINGS] == nil then
             engineState[asrEnum.SETTINGS] = {}
