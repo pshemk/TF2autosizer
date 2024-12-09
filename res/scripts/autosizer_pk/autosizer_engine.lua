@@ -1067,9 +1067,6 @@ local function refreshLinesCargoAmounts()
                                 engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.CARGO_AMOUNT] == 0 then
                                 alwaysTrack = true
                             end
-                            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.SCHEDULER_ENABLED] then
-                                alwaysTrack = true
-                            end
                         end
                     end
                     if alwaysTrack then
@@ -1482,7 +1479,12 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
                 return true, currentWagonCount
             end
 
-            -- if the line is set to "always track" (due to engine-only trains or departure scheduler)
+            -- if scheduled departuers are enabled - track the train
+            if stationConfig[asrEnum.station.SCHEDULER_ENABLED] == true then 
+                return true, currentWagonCount
+            end
+
+            -- if the line is set to "always track" (due to engine-only trains)
             if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ALWAYS_TRACK] == true then 
                 return true, currentWagonCount
             end
@@ -1645,7 +1647,9 @@ local function checkTrainsPositions()
                 -- log("engine: train " .. trainId .. " timeUntilLoad: " .. trainCurrentInfo.timeUntilLoad )
                 if trainCurrentInfo.timeUntilLoad <= 0.25 then
 
-                    if trainPrevInfo[asrEnum.trackedTrain.DELAY_DEPARTURE] then
+                    if trainPrevInfo[asrEnum.trackedTrain.DELAY_DEPARTURE] and 
+                        engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] and 
+                        engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME] then
                         -- calculate the departure time
                         local departureTime = engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] + engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME]
                         if departureTime > getGameTime() and not trainPrevInfo[asrEnum.trackedTrain.IS_STOPPED] then
