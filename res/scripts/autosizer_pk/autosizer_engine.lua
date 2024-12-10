@@ -1555,6 +1555,16 @@ local function checkTrainsCapacity()
                                     log("engine: train " .. getTrainName(trainId) .. " no need to track")
                                 end
                             end
+
+                            -- check if the train is stopped but shouldn't be
+                            if trainInfo.userStopped == true and trainInfo.state == api.type.enum.TransportVehicleState.AT_TERMINAL and
+                                not engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then
+                                log("engine: train " .. getTrainName(trainId) .. " is stopped at a station, but not tracked, starting")
+                                local startCmd = api.cmd.make.setUserStopped(tonumber(trainId), false)
+                                api.cmd.sendCommand(startCmd, function ()
+                                    log ("engine: train " .. getTrainName(trainId) .. " has been restarted" )
+                                end)
+                            end
                         else
                             print("engine: train " .. getTrainName(trainId) .. " couldn't get info from the API (" .. trainId .. ")")
                             -- flags.paused = true
@@ -1814,6 +1824,11 @@ local function checkTrainsPositions()
 end
 
 
+local function checkTrainsState()
+
+
+
+end
 
 local function updateLineStations(lineId)
 
