@@ -36,6 +36,7 @@ local asrLastLinesVersion = nil
 local asrLastShippingContractsVersion = nil
 local asrLastCargoGroupsVersion = nil
 local asrLastCargoGroupsMembersVersion = nil
+local asrLastLineSettingsVersion = nil
 local asrEngineMessageQueue = {}
 
 local cargoTypes = {}
@@ -3527,6 +3528,11 @@ local function buildMainWindow()
         sendEngineCommand("asrCheckTrainConfigs")
     end)
 
+    local enableGuiDebugButton = api.gui.comp.Button.new(api.gui.comp.TextView.new("Enable GUI debug"), false)
+    enableGuiDebugButton:onClick(function () 
+        sendEngineCommand("asrEnableGuiDebug")
+    end)
+
     if asrState[asrEnum.STATUS] and asrState[asrEnum.STATUS][asrEnum.status.DEBUG_ENABLED] then
         debugTable:setVisible(true, false)
     else
@@ -3543,6 +3549,7 @@ local function buildMainWindow()
     debugTable:addRow({dumpTrackedTainsButton})
     debugTable:addRow({forceLineCheckButton})
     debugTable:addRow({deleteIndustriesButton})
+    debugTable:addRow({enableGuiDebugButton})
     -- debugTable:addRow({unpauseButton})
     debugTable:addRow({eraseStateButton})
 
@@ -3624,6 +3631,10 @@ local function guiInit()
             
         else
             sendEngineCommand("asrForceLineCheck")
+
+            if asrGuiState.selectedLine then 
+                sendEngineCommand("asrInitLine", { lineId = asrGuiState.selectedLine })
+            end
             asrGuiState.isVisible = true
             linesWindow:setVisible(true,true)
         end
@@ -3662,6 +3673,13 @@ function asrGui.guiUpdate()
         asrLastLinesVersion = asrState[asrEnum.STATUS][asrEnum.status.LINES_VERSION]
         log("gui: lines version change")
         asrGuiState.rebuildLinesTable = true 
+    end
+
+    if asrState[asrEnum.STATUS] and asrState[asrEnum.STATUS][asrEnum.status.LINE_SETTINGS_VERSION] ~= asrLastLineSettingsVersion then
+        asrLastLineSettingsVersion = asrState[asrEnum.STATUS][asrEnum.status.LINE_SETTINGS_VERSION]
+        log("gui: lines settings version change")
+        asrGuiState.settingsTableInitalising = true 
+        asrGuiState.refreshLinesTable = true
     end
 
     if asrState[asrEnum.STATUS] and asrState[asrEnum.STATUS][asrEnum.status.SHIPPING_CONTRACTS_VERSION] ~= asrLastShippingContractsVersion then

@@ -240,15 +240,15 @@ local function checkLineConfig(lineId)
                 enableLine(lineId)
             end
         else
-            log("engine: checkLineConfig: got to configured")
-            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Configured"
-            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = _("status_configured")
+            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] ~= "OK" then
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Configured"
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = _("status_configured")
+            end
             if engineState[asrEnum.LINES][tostring(lineId)].enabled then 
                 enableLine(lineId)
             end
         end
     else
-        log("engine: checkLineConfig: got to miconfigured stations")
         engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Misconfigured"
         engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = _("status_miconfigured_stations")
         if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ENABLED] == true then 
@@ -1929,16 +1929,10 @@ local function checkTrainsPositions()
     if engineState[asrEnum.STATUS][asrEnum.status.TIMINGS_ENABLED] then  storeTimings("checkTrainsPositions", math.ceil((os.clock() - startTime)*1000000)/1000) end
 end
 
-
-local function checkTrainsState()
-
-
-
-end
-
 local function updateLineStations(lineId)
 
     log("engine: updateLineStations: " .. lineId)
+    local stopsIds = {}
     if api.engine.entityExists(tonumber(lineId)) then
         local lineDetails = api.engine.getComponent(tonumber(lineId), api.type.ComponentType.LINE)
         -- log("engine: getLineStations getComponent")
@@ -1946,6 +1940,8 @@ local function updateLineStations(lineId)
             for stopOrder, stop in pairs(lineDetails.stops) do
                 local stationGroupId = stop.stationGroup
                 local stationGroupDetails = api.engine.getComponent(tonumber(stationGroupId), api.type.ComponentType.STATION_GROUP)
+
+                table.insert(stopsIds, stopOrder)
                 -- log("engine: getLineStation2 getComponent")
                 if stationGroupDetails ~= nil then
                     for _, stationId in pairs(stationGroupDetails.stations) do
@@ -1970,6 +1966,22 @@ local function updateLineStations(lineId)
                 end
             end
         end
+    end
+
+    -- loop through all lines stops and make sure they were not removed from the game
+    local stopsChanged = false
+    if engineState[asrEnum.LINES] then
+        for stopId in pairs(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS]) do
+            if not asrHelper.inTable(stopsIds, stopId) then
+                log("engine: updateLineStations: line " .. lineId .. " has extra stop " .. stopId .. " removing")
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopId] = nil
+                    stopsChanged = true
+            end
+        end
+    end
+    if stopsChanged then
+        increseObjectVersion(asrEnum.status.LINE_SETTINGS_VERSION)
+        engineState[asrEnum.UPDATE_TIMESTAMP] = asrHelper.getUniqueTimestamp()
     end
 end
 
@@ -2164,7 +2176,8 @@ local function updateLineTrainsInfo(lineId)
     end 
 
     if validityStatusChange then
-        engineState[asrEnum.STATUS][asrEnum.status.LINES_VERSION] = engineState[asrEnum.STATUS][asrEnum.status.LINES_VERSION] + 1
+        increseObjectVersion(asrEnum.status.LINES_VERSION)
+        -- engineState[asrEnum.STATUS][asrEnum.status.LINES_VERSION] = engineState[asrEnum.STATUS][asrEnum.status.LINES_VERSION] + 1
     end
     engineState[asrEnum.UPDATE_TIMESTAMP] = asrHelper.getUniqueTimestamp()
 end
@@ -2431,6 +2444,9 @@ function asrEngine.handleEvent(id, params)
     elseif id == "asrEnableDebug" then
         log("engine: debug enabled")
         engineState[asrEnum.STATUS][asrEnum.status.DEBUG_ENABLED] = true
+    elseif id == "asrEnableGuiDebug" then
+        log("engine: gui debug enabled")
+        engineState[asrEnum.STATUS][asrEnum.status.GUI_DEBUG] = true
     elseif id == "asrDisableDebug" then
         log("engine: debug disabled")
         engineState[asrEnum.STATUS][asrEnum.status.DEBUG_ENABLED] = false

@@ -26,8 +26,9 @@ asrEnum.status.LAST_ID                          = 6
 asrEnum.status.SHIPPING_CONTRACTS_VERSION       = 7
 asrEnum.status.CARGO_GROUPS_VERSION             = 8
 asrEnum.status.CARGO_GROUPS_MEMBERS_VERSION     = 9
-asrEnum.status.GUI_DEBUG                        = 10
 asrEnum.status.STATE_VERSION                    = 10
+asrEnum.status.GUI_DEBUG                        = 11
+asrEnum.status.LINE_SETTINGS_VERSION            = 12
 
 -- LINES
 asrEnum.line                                    = {}
