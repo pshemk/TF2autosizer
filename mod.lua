@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 8,
+      minorVersion = 9,
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
