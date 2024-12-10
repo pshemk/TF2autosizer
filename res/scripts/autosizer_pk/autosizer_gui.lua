@@ -3577,6 +3577,7 @@ local function buildMainWindow()
         if visible == true then
             sendEngineCommand("asrRefreshLinesNames", {})
             sendEngineCommand("asrStartRefresh", {})
+            sendEngineCommand("asrCheckCargoTrackingReferences", {})
             asrGuiState.refreshLinesTable = true
         end
     end)

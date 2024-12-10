@@ -288,7 +288,9 @@ end
 
 local function increaseMemberInUseCounter(memberId, memberType)
 
+    log("engine: imic: increasing for " .. memberType .. ": " .. memberId)
     if memberType == "shippingContract" then
+        log("engine: imic: increasing for shipping contract: " .. memberId)
         if  engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] == nil then 
             engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] = 1
        else
@@ -296,6 +298,7 @@ local function increaseMemberInUseCounter(memberId, memberType)
        end
     end
     if memberType == "cargoGroup" then
+        log("engine: imic: increasing for cargo group: " .. memberId)
         if  engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] == nil then 
             engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] = 1
        else
@@ -306,16 +309,113 @@ end
 
 local function decreaseMemberInUseCounter(memberId, memberType)
 
-    if memberType == "shippingContract" then
+    log("engine: dmic: decreasing for " .. memberType .. ": " .. memberId)
+    if memberType == "shippingContract" and engineState[asrEnum.SHIPPING_CONTRACTS][memberId] then
+        log("engine: dmic: decreasing for shipping contract: " .. memberId)
         if engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] and 
             engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] > 0 then
             engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] = engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] - 1
         end
     end
-    if memberType == "cargoGroup" then
+    if memberType == "cargoGroup" and engineState[asrEnum.CARGO_GROUPS][memberId] then
+        log("engine: dmic: decreasing for cargo group: " .. memberId)
         if engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] and 
             engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] > 0 then
             engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] = engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] - 1
+        end
+    end
+end
+
+local function checkMemberInUseCounter(memberId, memberType)
+
+    if memberType == "shippingContract" and engineState[asrEnum.SHIPPING_CONTRACTS][memberId] then
+        local currentCounter = engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE]
+        if not currentCounter then 
+            currentCounter = 0
+            engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] = 0
+        end
+
+        local discoveredCounter = 0
+        -- loop through all lines and stations
+        if engineState[asrEnum.LINES] then 
+            for lineId, lineDetails in pairs(engineState[asrEnum.LINES]) do
+                if lineDetails[asrEnum.line.STATIONS] then
+                    for _, stationDetails in pairs(lineDetails[asrEnum.line.STATIONS]) do
+                        if stationDetails[asrEnum.station.SHIPPING_CONTRACT_CARGO_ID] and stationDetails[asrEnum.station.SHIPPING_CONTRACT_CARGO_ID] == memberId then
+                            discoveredCounter = discoveredCounter + 1
+                        end
+                    end
+                end
+            end
+        end
+        -- loop through all cargo groups
+        if engineState[asrEnum.CARGO_GROUPS] then
+            for _, cargoGroupDetails in pairs(engineState[asrEnum.CARGO_GROUPS]) do
+                if cargoGroupDetails[asrEnum.cargoGroup.MEMBERS] then
+                    for _, cargoGroupMemberDetails in pairs(cargoGroupDetails[asrEnum.cargoGroup.MEMBERS]) do
+                        if cargoGroupMemberDetails[asrEnum.cargoGroupMember.SHIPPING_CONTRACT_ID] and cargoGroupMemberDetails[asrEnum.cargoGroupMember.SHIPPING_CONTRACT_ID] == memberId then
+                            discoveredCounter = discoveredCounter + 1
+                        end
+                    end
+                end
+            end
+        end
+        if currentCounter ~= discoveredCounter then
+            log("engine: checkMemberInUseCounter: " .. memberType .. " " .. memberId .. " had incorrect reference count: " .. currentCounter .. " should be: " .. discoveredCounter)
+            engineState[asrEnum.SHIPPING_CONTRACTS][memberId][asrEnum.shippingContract.IN_USE] = discoveredCounter
+        end
+    end
+
+    if memberType == "cargoGroup" and engineState[asrEnum.CARGO_GROUPS][memberId] then
+        local currentCounter = engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE]
+        if not currentCounter then 
+            currentCounter = 0
+            engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] = 0
+        end
+
+        local discoveredCounter = 0
+        -- loop through all lines and stations
+        if engineState[asrEnum.LINES] then 
+            for lineId, lineDetails in pairs(engineState[asrEnum.LINES]) do
+                if lineDetails[asrEnum.line.STATIONS] then
+                    for _, stationDetails in pairs(lineDetails[asrEnum.line.STATIONS]) do
+                        if stationDetails[asrEnum.station.CARGO_GROUP_ID] and stationDetails[asrEnum.station.CARGO_GROUP_ID] == memberId then
+                            discoveredCounter = discoveredCounter + 1
+                        end
+                    end
+                end
+            end
+        end
+        -- loop through all cargo groups
+        if engineState[asrEnum.CARGO_GROUPS] then
+            for _, cargoGroupDetails in pairs(engineState[asrEnum.CARGO_GROUPS]) do
+                if cargoGroupDetails[asrEnum.cargoGroup.MEMBERS] then
+                    for _, cargoGroupMemberDetails in pairs(cargoGroupDetails[asrEnum.cargoGroup.MEMBERS]) do
+                        if cargoGroupMemberDetails[asrEnum.cargoGroupMember.CARGO_GROUP_ID] and cargoGroupMemberDetails[asrEnum.cargoGroupMember.CARGO_GROUP_ID] == memberId then
+                            discoveredCounter = discoveredCounter + 1
+                        end
+                    end
+                end
+            end
+        end
+        if currentCounter ~= discoveredCounter then
+            log("engine: checkMemberInUseCounter: " .. memberType .. " " .. memberId .. " had incorrect reference count: " .. currentCounter .. " should be: " .. discoveredCounter)
+            engineState[asrEnum.CARGO_GROUPS][memberId][asrEnum.cargoGroup.IN_USE] = discoveredCounter
+        end
+    end
+end
+
+local function asrCheckCargoTrackingReferences() 
+
+    if engineState[asrEnum.SHIPPING_CONTRACTS] then
+        for shippingContractId in pairs(engineState[asrEnum.SHIPPING_CONTRACTS]) do
+            checkMemberInUseCounter(shippingContractId, "shippingContract")
+        end
+    end
+
+    if engineState[asrEnum.CARGO_GROUPS] then
+        for cargoGroupId in pairs(engineState[asrEnum.CARGO_GROUPS]) do
+            checkMemberInUseCounter(cargoGroupId, "cargoGroup")
         end
     end
 end
@@ -347,6 +447,7 @@ local function updateStation(stationConfig)
                 local previousShippingContractId = engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.SHIPPING_CONTRACT_ID]
                 if previousShippingContractId then 
                     decreaseMemberInUseCounter(previousShippingContractId, "shippingContract")
+                    checkMemberInUseCounter(previousShippingContractId, "shippingContract")
                 end
                 engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.SELECTOR] = nil
                 engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.SHIPPING_CONTRACT_ID] = nil
@@ -358,9 +459,11 @@ local function updateStation(stationConfig)
                 local previousShippingContractId = engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.SHIPPING_CONTRACT_ID]
                 if previousShippingContractId then
                     decreaseMemberInUseCounter(previousShippingContractId, "shippingContract")
+                    checkMemberInUseCounter(previousShippingContractId, "shippingContract")
                 end
                 if stationConfig.config[asrEnum.station.SHIPPING_CONTRACT_ID] and engineState[asrEnum.SHIPPING_CONTRACTS][tostring(stationConfig.config[asrEnum.station.SHIPPING_CONTRACT_ID])] then
                     increaseMemberInUseCounter(stationConfig.config[asrEnum.station.SHIPPING_CONTRACT_ID], "shippingContract")
+                    checkMemberInUseCounter(stationConfig.config[asrEnum.station.SHIPPING_CONTRACT_ID], "shippingContract")
                 end
             end
         end
@@ -370,6 +473,7 @@ local function updateStation(stationConfig)
                 local previousCargoGroupId = engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.CARGO_GROUP_ID]
                 if previousCargoGroupId then 
                     decreaseMemberInUseCounter(previousCargoGroupId, "cargoGroup")
+                    checkMemberInUseCounter(previousCargoGroupId, "cargoGroup")
                 end
                 engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.SELECTOR] = nil
                 engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.CARGO_GROUP_ID] = nil
@@ -380,9 +484,11 @@ local function updateStation(stationConfig)
                 local previousCargoGroupId = engineState[asrEnum.LINES][tostring(stationConfig.lineId)][asrEnum.line.STATIONS][tonumber(stationConfig.stopSequence)][asrEnum.station.CARGO_GROUP_ID]
                 if previousCargoGroupId then 
                     decreaseMemberInUseCounter(previousCargoGroupId, "cargoGroup")
+                    checkMemberInUseCounter(previousCargoGroupId, "cargoGroup")
                 end
                 if stationConfig.config[asrEnum.station.CARGO_GROUP_ID] and engineState[asrEnum.CARGO_GROUPS][tostring(stationConfig.config[asrEnum.station.CARGO_GROUP_ID])] then
                     increaseMemberInUseCounter(stationConfig.config[asrEnum.station.CARGO_GROUP_ID], "cargoGroup")
+                    checkMemberInUseCounter(stationConfig.config[asrEnum.station.CARGO_GROUP_ID], "cargoGroup")
                 end
             end
         end
@@ -2155,6 +2261,7 @@ local function updateShippingContract(params)
             engineState[asrEnum.SHIPPING_CONTRACTS][tostring(params.shippingContractId)][asrEnum.shippingContract.MANUAL_NAME] = nil
         end
 
+        checkMemberInUseCounter(params.shippingContractId, "shippingContract")
         engineState[asrEnum.UPDATE_TIMESTAMP] = asrHelper.getUniqueTimestamp()
         if newContract then
             increseObjectVersion(asrEnum.status.SHIPPING_CONTRACTS_VERSION)
@@ -2194,14 +2301,18 @@ end
 local function deleteCargoGroup(params)
     if params and params.cargoGroupId then 
         if engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS] then 
-            for memberId, memberDetails in pairs(engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS]) do
-                if memberDetails[asrEnum.cargoGroupMember.TYPE] == "shippingContract" or memberDetails[asrEnum.cargoGroupMember.TYPE] == "cargoGroup" then
-                    decreaseMemberInUseCounter(memberId, memberDetails[asrEnum.cargoGroupMember.TYPE])
+            for _, memberDetails in pairs(engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS]) do
+                if memberDetails[asrEnum.cargoGroupMember.TYPE] == "shippingContract" then
+                    decreaseMemberInUseCounter(memberDetails[asrEnum.cargoGroupMember.SHIPPING_CONTRACT_ID], memberDetails[asrEnum.cargoGroupMember.TYPE])
+                end
+                if memberDetails[asrEnum.cargoGroupMember.TYPE] == "cargoGroup" then
+                    decreaseMemberInUseCounter(memberDetails[asrEnum.cargoGroupMember.CARGO_GROUP_ID], memberDetails[asrEnum.cargoGroupMember.TYPE])
                 end
             end
         end
         engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)] = nil
         increseObjectVersion(asrEnum.status.CARGO_GROUPS_VERSION)
+        engineState[asrEnum.UPDATE_TIMESTAMP] = asrHelper.getUniqueTimestamp()
     end
 end
 
@@ -2212,9 +2323,13 @@ local function addCargoGroupMember(params)
             engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS] = {}
         end
         table.insert(engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS], params.values)
-        if params.values[asrEnum.cargoGroupMember.TYPE] and 
-            (params.values[asrEnum.cargoGroupMember.TYPE] == "shippingContract" or params.values[asrEnum.cargoGroupMember.TYPE] == "cargoGroup") then
-                increaseMemberInUseCounter(params.values[asrEnum.cargoGroupMember.SHIPPING_CONTRACT_ID], params.values[asrEnum.cargoGroupMember.TYPE])
+        if params.values[asrEnum.cargoGroupMember.TYPE] and params.values[asrEnum.cargoGroupMember.TYPE] == "shippingContract"  then
+            increaseMemberInUseCounter(params.values[asrEnum.cargoGroupMember.SHIPPING_CONTRACT_ID], params.values[asrEnum.cargoGroupMember.TYPE])
+            checkMemberInUseCounter(params.values[asrEnum.cargoGroupMember.SHIPPING_CONTRACT_ID], params.values[asrEnum.cargoGroupMember.TYPE])
+        end
+        if params.values[asrEnum.cargoGroupMember.TYPE] and params.values[asrEnum.cargoGroupMember.TYPE] == "cargoGroup"  then
+            increaseMemberInUseCounter(params.values[asrEnum.cargoGroupMember.CARGO_GROUP_ID], params.values[asrEnum.cargoGroupMember.TYPE])
+            checkMemberInUseCounter(params.values[asrEnum.cargoGroupMember.CARGO_GROUP_ID], params.values[asrEnum.cargoGroupMember.TYPE])
         end
         if not engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MANUAL_NAME] or 
             string.find(engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.NAME] , "Cargo group #") then
@@ -2224,6 +2339,8 @@ local function addCargoGroupMember(params)
         engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.VALID] = false
         engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.VALIDITY_CHECKED] = false
         increseObjectVersion(asrEnum.status.CARGO_GROUPS_MEMBERS_VERSION)
+
+        checkMemberInUseCounter(params.cargoGroupId, "cargoGroup")
         engineState[asrEnum.UPDATE_TIMESTAMP] = asrHelper.getUniqueTimestamp()
     end
 end
@@ -2235,8 +2352,11 @@ local function deleteCargoGroupMember(params)
            engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS] and 
            engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS][params.memberId] then
             local memberType = engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS][params.memberId][asrEnum.cargoGroupMember.TYPE]
-            if memberType == "shippingContract" or memberType == "cargoGroup" then
-                decreaseMemberInUseCounter(params.memberId, memberType)
+            if memberType == "shippingContract" then
+                decreaseMemberInUseCounter(engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS][params.memberId][asrEnum.cargoGroupMember.SHIPPING_CONTRACT_ID], memberType)
+            end
+            if memberType == "cargoGroup" then
+                decreaseMemberInUseCounter(engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS][params.memberId][asrEnum.cargoGroupMember.CARGO_GROUP_ID], memberType)
             end
             engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS][params.memberId] = nil
         end
@@ -2247,6 +2367,7 @@ local function deleteCargoGroupMember(params)
         end
         engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.VALIDITY_CHECKED] = false
         increseObjectVersion(asrEnum.status.CARGO_GROUPS_MEMBERS_VERSION)
+        checkMemberInUseCounter(params.cargoGroupId, "cargoGroup")
         engineState[asrEnum.UPDATE_TIMESTAMP] = asrHelper.getUniqueTimestamp()
     end
 end
@@ -2368,6 +2489,9 @@ function asrEngine.handleEvent(id, params)
     elseif id == "asrCheckTrainConfigs" then
         log("engine: asrCheckTrainConfigs")        
         checkTrainsCapacity()
+    elseif id == "asrCheckCargoTrackingReferences" then
+        log("engine: asrCheckCargoTrackingReferences")        
+        asrCheckCargoTrackingReferences()
     elseif id == "asrEraseState" then
         log("engine: asrEraseState")        
         engineState = {}

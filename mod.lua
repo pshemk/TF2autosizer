@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 8,
+      minorVersion = 9,
       severityAdd = "NONE",
       severityRemove = "NONE",
       url = "https://github.com/pshemk/TF2autosizer",
