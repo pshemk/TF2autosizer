@@ -1662,14 +1662,18 @@ local function checkTrainsCapacity()
                                 end
                             end
 
-                            -- check if the train is stopped but shouldn't be
-                            if trainInfo.userStopped == true and trainInfo.state == api.type.enum.TransportVehicleState.AT_TERMINAL and
-                                not engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then
-                                log("engine: train " .. getTrainName(trainId) .. " is stopped at a station, but not tracked, starting")
-                                local startCmd = api.cmd.make.setUserStopped(tonumber(trainId), false)
-                                api.cmd.sendCommand(startCmd, function ()
-                                    log ("engine: train " .. getTrainName(trainId) .. " has been restarted" )
-                                end)
+                            -- check if the train is stopped but shouldn't be, that starts all stopped trains that are not supposed to be stopped
+                            -- local restartTrain = false
+                            if trainInfo.userStopped == true then                                        -- trainInfo.state == api.type.enum.TransportVehicleState.AT_TERMINAL and
+                                if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then
+                                    if not engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.DELAY_DEPARTURE] then
+                                        log("engine: train " .. getTrainName(trainId) .. " is stopped - NO departure set, restarting")
+                                        local startCmd = api.cmd.make.setUserStopped(tonumber(trainId), false)
+                                            api.cmd.sendCommand(startCmd, function ()
+                                            log ("engine: train " .. getTrainName(trainId) .. " has been restarted" )
+                                        end)
+                                    end
+                                end
                             end
                         else
                             print("engine: train " .. getTrainName(trainId) .. " couldn't get info from the API (" .. trainId .. ")")
@@ -1793,7 +1797,6 @@ local function checkTrainsPositions()
                                 trainConfigCache[tostring(trainId)] = generateTrainConfig(trainId, trainCurrentInfo.line, trainCurrentInfo.stopIndex)
                             end
                             local replaceCmd = api.cmd.make.replaceVehicle(tonumber(trainId), trainConfigCache[tostring(trainId)])
-                            engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACED] = true
                             api.cmd.sendCommand(replaceCmd, function () 
                                 log ("engine: train " .. getTrainName(trainId) .. " replace sent on unload, currently at stop " .. trainCurrentInfo.stopIndex)
                                 engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACED] = true
@@ -1832,7 +1835,6 @@ local function checkTrainsPositions()
 
                     if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACE_ON] == "unload" then 
                         local replaceCmd = api.cmd.make.replaceVehicle(tonumber(trainId), trainConfigCache[tostring(trainId)])
-                        engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACED] = true
                         api.cmd.sendCommand(replaceCmd, function () 
                             log ("engine: train " .. getTrainName(trainId) .. " replace sent on restart/unload, currently at stop " .. trainCurrentInfo.stopIndex)
                             engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACED] = true
