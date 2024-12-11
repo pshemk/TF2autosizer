@@ -155,7 +155,7 @@ local asrGuiDimensions = {
         columns = {150, 340}
     },
     cargoGroupDropDownList = {
-        width = 350,
+        width = 390,
         height = 240,
     },
     -- cargoGroupIndustryDropDownList = {
@@ -294,7 +294,7 @@ local function showDropDownList(listName, entries, nameSort)
             end
         else
             icon = api.gui.comp.ImageView.new("ui/empty15.tga")
-            icon:setMaximumSize(api.gui.util.Size.new(15, 15))
+            icon:setMaximumSize(api.gui.util.Size.new(1, 1))
         end
         if entry.icon2 ~= nil then 
             icon2 = api.gui.comp.ImageView.new(entry.icon2)
@@ -304,7 +304,7 @@ local function showDropDownList(listName, entries, nameSort)
             end
         else
             icon2 = api.gui.comp.ImageView.new("ui/empty15.tga")
-            icon2:setMaximumSize(api.gui.util.Size.new(15, 15))
+            icon2:setMaximumSize(api.gui.util.Size.new(1, 1))
         end
 
         if entry.icon3 ~= nil then 
@@ -312,12 +312,16 @@ local function showDropDownList(listName, entries, nameSort)
             icon3:setMaximumSize(api.gui.util.Size.new(15, 15))
         else
             icon3 = api.gui.comp.ImageView.new("ui/empty15.tga")
-            icon3:setMaximumSize(api.gui.util.Size.new(15, 15))
+            icon3:setMaximumSize(api.gui.util.Size.new(1, 1))
         end
  
         local lineLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
-        lineLayout:addItem(icon2)
-        lineLayout:addItem(icon)
+        if entry.icon2 ~= nil then 
+           lineLayout:addItem(icon2)
+        end
+        if entry.icon ~= nil then 
+            lineLayout:addItem(icon)
+        end
         lineLayout:addItem(label)
         if entry.icon3 ~= nil then 
             lineLayout:addItem(icon3)        
@@ -2021,12 +2025,20 @@ local function rebuildShippingContractsLayout()
 
 
             -- supplier
+            if asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)] and 
+            asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID] then
+                log("gui: rebuildShippingContractsLayout: found supplier id: " .. asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])
+                if asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])] and 
+                asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])][asrEnum.industry.NAME] then 
+                    log("gui: rebuildShippingContractsLayout: found supplier name: " .. asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])][asrEnum.industry.NAME])
+                end
+            end
             local shippingindustryContractSupplierLabel = api.gui.comp.TextView.new(i18Strings.supplier)
             local shippingindustryContractSupplierButtonLayout = createIndustryButtonLayout(
                 asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)] and 
                 asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID] 
-                and asrState[asrEnum.INDUSTRIES][asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID]] and 
-                asrState[asrEnum.INDUSTRIES][asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID]][asrEnum.industry.NAME],
+                and asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])] and 
+                asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])][asrEnum.industry.NAME],
                 asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)] and 
                 asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CARGO_ID],
                 asrEnum.industry.SUPPLIER, "industry" )
@@ -2137,18 +2149,27 @@ local function rebuildShippingContractsLayout()
             end)
 
             -- consumer
+            if asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)] and 
+            asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID] then
+                log("gui: rebuildShippingContractsLayout: found consumer id: " .. asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])
+                if asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])] and 
+                asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])][asrEnum.industry.NAME] then 
+                    log("gui: rebuildShippingContractsLayout: found consumer name: " .. asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])][asrEnum.industry.NAME])
+                end
+            end
+
             local shippingindustryContractConsumerLabel = api.gui.comp.TextView.new(i18Strings.consumer)
             local shippingindustryContractConsumerButtonLayout = createIndustryButtonLayout(
                 asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)] and 
                 asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID] and 
-                asrState[asrEnum.INDUSTRIES][asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID]] and 
-                asrState[asrEnum.INDUSTRIES][asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID]][asrEnum.industry.NAME],
+                asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])] and 
+                asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])][asrEnum.industry.NAME],
                 asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)] and asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CARGO_ID],
                 asrEnum.industry.CONSUMER,
                 asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)] and
                 asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID] and 
-                asrState[asrEnum.INDUSTRIES][asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID]] and 
-                asrState[asrEnum.INDUSTRIES][asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID]][asrEnum.industry.TYPE]
+                asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])] and 
+                asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])][asrEnum.industry.TYPE]
                 )
         
             local shippingindustryContractConsumerButton = api.gui.comp.Button.new(shippingindustryContractConsumerButtonLayout, false)
@@ -2332,6 +2353,15 @@ local function rebuildShippingContractsLayout()
                 shippingContractSettingsNameLabel:setText(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.NAME], false)
             end
 
+            if asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)] and 
+            asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID] then
+                log("gui: rebuildShippingContractsLayout: (r) found supplier id: " .. asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])
+                if asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])] and 
+                asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])][asrEnum.industry.NAME] then 
+                    log("gui: rebuildShippingContractsLayout: (r) found supplier name: " .. asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])][asrEnum.industry.NAME])
+                end
+            end
+
             local shippingindustryContractSupplierButtonLayout = createIndustryButtonLayout(
                 asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID] and asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.SUPPLIER_ID])][asrEnum.industry.NAME] or nil,
                 asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CARGO_ID],
@@ -2340,6 +2370,15 @@ local function rebuildShippingContractsLayout()
             local shippingindustryContractSupplierButton = api.gui.util.getById("asr.shippingindustryContractSupplierInput-"  .. selectedShippingContractId)
             if shippingindustryContractSupplierButton then 
                 shippingindustryContractSupplierButton:setContent(shippingindustryContractSupplierButtonLayout)
+            end
+
+            if asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)] and 
+            asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID] then
+                log("gui: rebuildShippingContractsLayout: (r) found consumer id: " .. asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])
+                if asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])] and 
+                asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])][asrEnum.industry.NAME] then 
+                    log("gui: rebuildShippingContractsLayout: (r) found consumer name: " .. asrState[asrEnum.INDUSTRIES][tostring(asrState[asrEnum.SHIPPING_CONTRACTS][tostring(selectedShippingContractId)][asrEnum.shippingContract.CONSUMER_ID])][asrEnum.industry.NAME])
+                end
             end
 
             local shippingindustryContractConsumerButtonLayout = createIndustryButtonLayout(
