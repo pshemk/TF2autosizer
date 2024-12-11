@@ -736,10 +736,10 @@ local function rebuildLineSettingsLayout()
 
                     local amountSelectionIndustryShippingLabel = api.gui.comp.TextView.new(i18Strings.industry)
                     local amountSelectionIndustryShippingButtonLayout = createIndustryButtonLayout(
-                        station[asrEnum.station.INDUSTRY_ID] and asrState[asrEnum.INDUSTRIES][station[asrEnum.station.INDUSTRY_ID]] and asrState[asrEnum.INDUSTRIES][station[asrEnum.station.INDUSTRY_ID]][asrEnum.industry.NAME] or nil,
+                        station[asrEnum.station.INDUSTRY_ID] and asrState[asrEnum.INDUSTRIES][tostring(station[asrEnum.station.INDUSTRY_ID])] and asrState[asrEnum.INDUSTRIES][tostring(station[asrEnum.station.INDUSTRY_ID])][asrEnum.industry.NAME] or nil,
                         station[asrEnum.station.INDUSTRY_CARGO_ID],
                         station[asrEnum.station.INDUSTRY_KIND], 
-                        station[asrEnum.station.INDUSTRY_ID] and asrState[asrEnum.INDUSTRIES][station[asrEnum.station.INDUSTRY_ID]] and asrState[asrEnum.INDUSTRIES][station[asrEnum.station.INDUSTRY_ID]][asrEnum.industry.TYPE] )
+                        station[asrEnum.station.INDUSTRY_ID] and asrState[asrEnum.INDUSTRIES][tostring(station[asrEnum.station.INDUSTRY_ID])] and asrState[asrEnum.INDUSTRIES][tostring(station[asrEnum.station.INDUSTRY_ID])][asrEnum.industry.TYPE] )
         
                     local amountSelectionIndustryShippingButton = api.gui.comp.Button.new(amountSelectionIndustryShippingButtonLayout, false)
                     amountSelectionIndustryShippingButton:setId("asr.amountSelectionIndustryShippingInput-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
@@ -1435,10 +1435,10 @@ local function rebuildLineSettingsLayout()
                         end
 
                         local amountSelectionIndustryShippingButtonLayout = createIndustryButtonLayout(
-                            station[asrEnum.station.INDUSTRY_ID] and asrState[asrEnum.INDUSTRIES][station[asrEnum.station.INDUSTRY_ID]] and asrState[asrEnum.INDUSTRIES][station[asrEnum.station.INDUSTRY_ID]][asrEnum.industry.NAME],
+                            station[asrEnum.station.INDUSTRY_ID] and asrState[asrEnum.INDUSTRIES][tostring(station[asrEnum.station.INDUSTRY_ID])] and asrState[asrEnum.INDUSTRIES][tostring(station[asrEnum.station.INDUSTRY_ID])][asrEnum.industry.NAME],
                             station[asrEnum.station.INDUSTRY_CARGO_ID],
                             station[asrEnum.station.INDUSTRY_KIND], 
-                            station[asrEnum.station.INDUSTRY_ID] and asrState[asrEnum.INDUSTRIES][station[asrEnum.station.INDUSTRY_ID]] and asrState[asrEnum.INDUSTRIES][station[asrEnum.station.INDUSTRY_ID]][asrEnum.industry.TYPE] )
+                            station[asrEnum.station.INDUSTRY_ID] and asrState[asrEnum.INDUSTRIES][tostring(station[asrEnum.station.INDUSTRY_ID])] and asrState[asrEnum.INDUSTRIES][tostring(station[asrEnum.station.INDUSTRY_ID])][asrEnum.industry.TYPE] )
     
                         amountSelectionIndustryShippingButton:setContent(amountSelectionIndustryShippingButtonLayout)
                     end
