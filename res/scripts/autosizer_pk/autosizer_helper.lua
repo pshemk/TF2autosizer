@@ -71,7 +71,7 @@ function asrHelper.filterTable(array, property, matchString)
   if array and type(array) == "table" then 
     local filteredTable = {}
     for key, value in pairs(array) do
-      if string.find(tostring(value[property]), matchString) then
+      if string.find(string.lower(tostring(value[property])), string.lower(matchString)) then
           filteredTable[key] = value
         end
     end
