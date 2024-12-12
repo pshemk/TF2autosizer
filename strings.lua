@@ -50,6 +50,7 @@ If you like my mod [url=https://buymeacoffee.com/peteraklnz]buy me a coffee :-) 
             pickup_waiting_backlog_label_tip = "Disables the waiting cargo pick up option\nif there is no more extra cargo to pick up",
             rename_cargo_group = "Rename cargo group",
             rename_shipping_contract = "Rename shipping contract",
+            search_for_line = "Search for line",
             settings = "Settings",
             shipping_contract = "Shipping contract",
             stations = "Stations",
