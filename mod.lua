@@ -1,7 +1,7 @@
 -- local autosizerModelLoader = require "autosizer_pk/autosizer_model_loader"
 
 --[[
-	Automatic train resizer, changes the number of wagons to maintain contant line throughput
+	Automatic train resizer, changes the number of wagons to maintain a constant line throughput
 --]]
 
  function data()
@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 11,
+      minorVersion = 12,   -- line filtering release
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
