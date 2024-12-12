@@ -1691,20 +1691,20 @@ local function  rebuildLinesTable()
                 lineColour:setId("asr.lineColour-" .. lineId)
                 local lineStatus = api.gui.comp.TextView.new("●")
                 lineStatus:setId("asr.lineStatus-" .. lineId)
-                local lineName = api.gui.comp.TextView.new(tostring(line[asrEnum.line.NAME]))
-                lineName:setStyleClassList({"asrLineName"})
-                lineName:setId("asr.lineName-" .. lineId)
-
-                lineColour:setStyleClassList({"asrLineColour-" .. asrGuiHelper.getLineColour(tonumber(lineId))})
-                if line.status ~= nil then 
-                    lineStatus:setStyleClassList({"asrLineStatus" .. line.status})
-                    if line.statusMessage ~= nil then 
-                        lineStatus:setTooltip(line.statusMessage)
+                if line[asrEnum.line.STATUS] ~= nil then 
+                    lineStatus:setStyleClassList({"asrLineStatus" .. line[asrEnum.line.STATUS]})
+                    if line[asrEnum.line.STATUS_MESSAGE] ~= nil then 
+                        lineStatus:setTooltip(line[asrEnum.line.STATUS_MESSAGE])
                     end
                 else
                     lineStatus:setStyleClassList({"asrLineStatusDisabled"})
                     lineStatus:setTooltip(i18Strings.disabled_for_line)    
                 end
+                local lineName = api.gui.comp.TextView.new(tostring(line[asrEnum.line.NAME]))
+                lineName:setStyleClassList({"asrLineName"})
+                lineName:setId("asr.lineName-" .. lineId)
+
+                lineColour:setStyleClassList({"asrLineColour-" .. asrGuiHelper.getLineColour(tonumber(lineId))})
                 
                 local lineEditIcon = api.gui.comp.ImageView.new("ui/modify16.tga")
                 local lineEditButton = api.gui.comp.Button.new(lineEditIcon, false)
@@ -3432,6 +3432,10 @@ local function buildMainWindow()
     local linesScrollArea = api.gui.comp.ScrollArea.new(api.gui.comp.TextView.new('linesScrollArea'), "asr.linesScrollArea")
     linesScrollArea:setId("asr.linesScrollArea")
 
+    local linesScrollLayout = api.gui.layout.BoxLayout.new("VERTICAL");
+    local linesScrollWrapper = api.gui.comp.Component.new("asr.linesScrolllWrapper")
+    linesScrollWrapper:setLayout(linesScrollLayout)
+
     local linesScrollAreaLayout = api.gui.layout.BoxLayout.new("VERTICAL")
     local linesScrollAreaComponent = api.gui.comp.Component.new("asr.linesScrollAreaComponent")
     linesScrollAreaComponent:setLayout(linesScrollAreaLayout)
@@ -3474,11 +3478,14 @@ local function buildMainWindow()
     end)
     linesScrollArea:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.linesScrollArea.width, asrGuiDimensions.linesScrollArea.height))
     linesScrollArea:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.linesScrollArea.width, asrGuiDimensions.linesScrollArea.height))
-    linesScrollAreaLayout:addItem(linesScrollFilterTextInput)
+   
     linesScrollAreaLayout:addItem(linesTable)
     linesScrollArea:setContent(linesScrollAreaComponent)
 
-    linesTabLayout:addItem(linesScrollArea)
+    linesScrollLayout:addItem(linesScrollFilterTextInput)
+    linesScrollLayout:addItem(linesScrollArea)
+
+    linesTabLayout:addItem(linesScrollWrapper)
 
     local lineSettingsScrollArea = api.gui.comp.ScrollArea.new(api.gui.comp.TextView.new('lineSettingsScrollArea'), "asr.lineSettingsScrollArea")
     lineSettingsScrollArea:setId("asr.lineSettingsScrollArea")
