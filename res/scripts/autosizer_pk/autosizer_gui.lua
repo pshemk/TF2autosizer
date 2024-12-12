@@ -68,6 +68,7 @@ local i18Strings =  {
     industry = _("industry"),
     line_name = _("line_name"),
     lines = _("lines"),
+    loading = _("loading"),
     manual = _("manual"),
     minimal_train_wagon_count = _("minimal_train_wagon_count"),
     minimal_train_wagon_count_tip = _("minimal_train_wagon_count_tip"),
@@ -76,6 +77,7 @@ local i18Strings =  {
     name_desc = _("name_desc"),
     new_cargo_group = _("new_cargo_group"),
     new_shipping_contract = _("new_shipping_contract"),
+    not_tracked = _("not_tracked"),
     pickup_waiting = _("pickup_waiting"),
     pickup_waiting_tip = _("pickup_waiting_tip"),
     pickup_waiting_backlog_label = _("pickup_waiting_backlog_label"),
@@ -90,14 +92,19 @@ local i18Strings =  {
     schedule_departures_tip_off = _("schedule_departures_tip_off"),
     schedule_departures_tip_on = _("schedule_departures_tip_on"),
     shipping_contract = _("shipping_contract"),
+    show_tracking_details = _("show_tracking_details"),
     stations = _("stations"),
     status_configured = _("status_configured"),
     status_miconfigured_stations = _("status_miconfigured_stations"),
     status_miconfigured_wagons = _("status_miconfigured_wagons"),
     supplier = _("supplier"),
+    tracked = _("tracked"),
     train_length = _("train_length"),
+    trains = _("trains"),
+    unloading = _("unloading"),
     wagons = _("wagons"),
     wagons_refresh_tip = _("wagons_refresh_tip"),
+    waiting = _("waiting"),
 }
 
 
@@ -133,6 +140,9 @@ local asrGuiDimensions = {
     },
     lineSettingsInternalTable = {
         columns = {20, 150, 320}
+    },
+    lineSettingsTrainsTable = {
+        columns = {200, 60, 100}
     },
     lineSettingsDropDownList = {
         width = 350,
@@ -186,6 +196,18 @@ local asrGuiDimensions = {
         columns = {590, 590}
     },
 }
+
+local worldId
+
+local function getGameTime()
+
+    if not worldId then worldId = api.engine.util.getWorld() end
+    local gameTime = api.engine.getComponent(worldId, api.type.ComponentType.GAME_TIME)
+    if gameTime then
+        return gameTime.gameTime/1000
+    end
+
+end
 
 -- drop down entries
 local dropDownEntries = {}
@@ -670,7 +692,8 @@ local function rebuildLineSettingsLayout()
                 for stopSequence, station in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS]) do
                     local stationName = ""
                     if station[asrEnum.station.STATION_GROUP_ID] ~=nil and api.engine.entityExists(station[asrEnum.station.STATION_GROUP_ID]) then
-                        stationName = api.engine.getComponent(station[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME).name
+                        local stationNameAPI = api.engine.getComponent(tonumber(station[asrEnum.station.STATION_GROUP_ID]), api.type.ComponentType.NAME)
+                        stationName = stationNameAPI.name
                     else
                         log("gui: getComponent can't find station name")
                     end
@@ -1243,7 +1266,7 @@ local function rebuildLineSettingsLayout()
                         local scheduleDeparturesLabel = api.gui.comp.TextView.new(i18Strings.schedule_departures)
                         scheduleDeparturesLabel:setId("asr.scheduleDeparturesLabel-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
 
-                        if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_COUNT] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_COUNT] > 1 then
+                        if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST] and #asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST] > 1 then
                             scheduleDeparturesLabel:setTooltip(i18Strings.schedule_departures_tip_on)
                             scheduleDeparturesCheckBox:setTooltip(i18Strings.schedule_departures_tip_on)
                             scheduleDeparturesCheckBox:setEnabled(true)
@@ -1385,7 +1408,118 @@ local function rebuildLineSettingsLayout()
     
                 lineSettingsTable:addRow({trainWagonsLabel, trainWagonsWrapper})
 
-                
+                -- train list
+                local trainListTable = api.gui.comp.Table.new(3, 'NONE')
+                trainListTable:setColWidth(0, asrGuiDimensions.lineSettingsTrainsTable.columns[1])
+                trainListTable:setColWidth(1, asrGuiDimensions.lineSettingsTrainsTable.columns[2])
+                trainListTable:setColWidth(2, asrGuiDimensions.lineSettingsTrainsTable.columns[3])
+
+                local trainNames = {}
+                trainListTable:setId("asr.trainListTable-" .. lineId)
+
+                if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST] then
+                    for _, trainId in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST]) do 
+                        local trainNameAPI = api.engine.getComponent(tonumber(trainId), api.type.ComponentType.NAME)
+                        local trainName = trainNameAPI.name
+
+                        table.insert(trainNames, { name = trainName })
+
+                        local trainTracked = false
+                        local trainStatus
+                        local trainDepartureTime = ""
+                        if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then 
+                            trainTracked = true 
+
+                            if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IN_STATION] then
+                                if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TIME_UNTIL_LOAD] > 0 then
+                                    trainStatus = "unloading"
+                                else
+                                    trainStatus = "loading"
+                                end
+                            end
+                            if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.DELAY_DEPARTURE] then
+                                trainStatus = "stopped"
+
+                                local departureTimeStamp = asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.STOP_INDEX] + 1][asrEnum.station.UNLOAD_TIMESTAMP] + asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAVEL_TIME]
+                                local trainDepartureTimeSeconds = departureTimeStamp - getGameTime()
+                                if trainDepartureTimeSeconds > 0 then 
+                                    if trainDepartureTimeSeconds > 120 then 
+                                        trainDepartureTime = math.floor(trainDepartureTimeSeconds/60) .. " min " .. math.ceil(trainDepartureTimeSeconds - 60 * math.floor(trainDepartureTimeSeconds/60)) .. " s"
+                                    else
+                                        trainDepartureTime = math.floor(trainDepartureTimeSeconds) .. " s"
+                                    end
+                                end
+                            end                       
+                        end
+
+                        local trainStatusLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
+                        local trainStatusWrapper = api.gui.comp.Component.new("asr.trainStatusWrapper")
+                        trainStatusWrapper:setLayout(trainStatusLayout)
+
+                        local trainTrackedIcon
+                        local trainStatusIcon
+
+                        local iconSize = api.gui.util.Size.new(12, 12)
+
+                        if trainTracked then
+                            trainTrackedIcon = api.gui.comp.ImageView.new("ui/icons/build-control/accept@2x.tga")
+                            trainTrackedIcon:setTooltip(i18Strings.tracked)
+    
+                        else
+                            trainTrackedIcon = api.gui.comp.ImageView.new("ui/icons/build-control/cancel@2x.tga")
+                            trainTrackedIcon:setTooltip(i18Strings.not_tracked)
+                        end
+                        trainTrackedIcon:setMinimumSize(iconSize)
+                        trainTrackedIcon:setMaximumSize(iconSize)
+                        trainStatusLayout:addItem(trainTrackedIcon)
+
+
+                        local trainIconSpacer = api.gui.comp.ImageView.new("ui/empty15.tga")
+                        trainIconSpacer:setMinimumSize(iconSize)
+                        trainIconSpacer:setMaximumSize(iconSize)
+                        trainStatusLayout:addItem(trainIconSpacer)
+
+                        if trainStatus == "loading" then
+                            trainStatusIcon = api.gui.comp.ImageView.new("ui/icons/game-menu/save_game@2x.tga")
+                            trainStatusIcon:setMinimumSize(iconSize)
+                            trainStatusIcon:setMaximumSize(iconSize)    
+                            trainStatusIcon:setTooltip(i18Strings.loading)
+                        elseif trainStatus == "unloading" then
+                            trainStatusIcon = api.gui.comp.ImageView.new("ui/icons/game-menu/load_game@2x.tga")
+                            trainStatusIcon:setMinimumSize(iconSize)
+                            trainStatusIcon:setMaximumSize(iconSize)
+                            trainStatusIcon:setTooltip(i18Strings.unloading)
+                        elseif trainStatus == "stopped" then
+                            trainStatusIcon = api.gui.comp.ImageView.new("ui/icons/game-menu/speed@2x.tga")
+                            trainStatusIcon:setMinimumSize(api.gui.util.Size.new(19, 19))
+                            trainStatusIcon:setMaximumSize(api.gui.util.Size.new(19, 19))    
+                            trainStatusIcon:setTooltip(i18Strings.waiting)
+                        else
+                            trainStatusIcon = api.gui.comp.ImageView.new("ui/empty15.tga")
+                        end
+                        trainStatusLayout:addItem(trainStatusIcon)
+
+                        trainListTable:addRow({
+                            api.gui.comp.TextView.new(trainName),
+                            trainStatusWrapper,
+                            api.gui.comp.TextView.new(trainDepartureTime),
+                        })
+                    end
+                end
+                trainListTable:setOrder(asrHelper.getSortOrder(trainNames, "name"))
+                local trainsLabel = api.gui.comp.TextView.new(i18Strings.trains)
+                trainsLabel:setId("asr.trainLabel-" .. lineId)
+                trainsLabel:setGravity(0,0)
+
+                lineSettingsTable:addRow({trainsLabel, trainListTable})
+                if asrState[asrEnum.SETTINGS][asrEnum.settings.TRAIN_DETAILS_ENABLED] then
+                    trainsLabel:setVisible(true, false)
+                    trainListTable:setVisible(true, false)
+                else
+                    trainsLabel:setVisible(false, false)
+                    trainListTable:setVisible(false, false)
+                end
+
                 local showLineStateButton = api.gui.comp.Button.new(api.gui.comp.TextView.new("Dump line details"), false)
                 showLineStateButton:onClick(function () 
                     sendEngineCommand("asrDumpLineState", { lineId = asrGuiState.selectedLine})
@@ -1454,6 +1588,113 @@ local function rebuildLineSettingsLayout()
                     end
                 end
                 trainWagonsListTable:addRow({trainWagonsListWrapper})
+            end
+
+            -- refresh train list
+            local trainListTable = api.gui.util.getById("asr.trainListTable-" .. lineId)
+            local trainsLabel = api.gui.util.getById("asr.trainLabel-" .. lineId)
+            if trainListTable and trainsLabel then 
+
+                local trainNames = {} 
+                trainListTable:deleteAll()
+
+                if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST] then
+                    for _, trainId in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST]) do 
+                        local trainNameAPI = api.engine.getComponent(tonumber(trainId), api.type.ComponentType.NAME)
+                        local trainName = trainNameAPI.name
+
+                        table.insert(trainNames, { name = trainName })
+
+                        local trainTracked = false
+                        local trainStatus
+                        local trainDepartureTime = ""
+                        if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then 
+                            trainTracked = true 
+                            if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IN_STATION] then
+                                if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TIME_UNTIL_LOAD] > 0 then
+                                    trainStatus = "unloading"
+                                else
+                                    trainStatus = "loading"
+                                end
+                            end
+                            if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.DELAY_DEPARTURE] then
+                                trainStatus = "stopped"
+
+                                local departureTimeStamp = asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.STOP_INDEX] + 1][asrEnum.station.UNLOAD_TIMESTAMP] + asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAVEL_TIME]
+                                local trainDepartureTimeSeconds = departureTimeStamp - getGameTime()
+                                if trainDepartureTimeSeconds > 0 then 
+                                    if trainDepartureTimeSeconds > 120 then 
+                                        trainDepartureTime = math.floor(trainDepartureTimeSeconds/60) .. " min " .. math.ceil(trainDepartureTimeSeconds - 60 * math.floor(trainDepartureTimeSeconds/60)) .. " s"
+                                    else
+                                        trainDepartureTime = math.floor(trainDepartureTimeSeconds) .. " s"
+                                    end
+                                end
+                            end                       
+                        end
+
+                        local trainStatusLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
+                        local trainStatusWrapper = api.gui.comp.Component.new("asr.trainStatusWrapper")
+                        trainStatusWrapper:setLayout(trainStatusLayout)
+
+                        local trainTrackedIcon
+                        local trainStatusIcon
+
+                        local iconSize = api.gui.util.Size.new(12, 12)
+
+                        if trainTracked then
+                            trainTrackedIcon = api.gui.comp.ImageView.new("ui/icons/build-control/accept@2x.tga")
+                            trainTrackedIcon:setTooltip(i18Strings.tracked)
+    
+                        else
+                            trainTrackedIcon = api.gui.comp.ImageView.new("ui/icons/build-control/cancel@2x.tga")
+                            trainTrackedIcon:setTooltip(i18Strings.not_tracked)
+                        end
+                        trainTrackedIcon:setMinimumSize(iconSize)
+                        trainTrackedIcon:setMaximumSize(iconSize)
+                        trainStatusLayout:addItem(trainTrackedIcon)
+
+
+                        local trainIconSpacer = api.gui.comp.ImageView.new("ui/empty15.tga")
+                        trainIconSpacer:setMinimumSize(iconSize)
+                        trainIconSpacer:setMaximumSize(iconSize)
+                        trainStatusLayout:addItem(trainIconSpacer)
+
+                        if trainStatus == "loading" then
+                            trainStatusIcon = api.gui.comp.ImageView.new("ui/icons/game-menu/save_game@2x.tga")
+                            trainStatusIcon:setMinimumSize(iconSize)
+                            trainStatusIcon:setMaximumSize(iconSize)    
+                            trainStatusIcon:setTooltip(i18Strings.loading)
+                        elseif trainStatus == "unloading" then
+                            trainStatusIcon = api.gui.comp.ImageView.new("ui/icons/game-menu/load_game@2x.tga")
+                            trainStatusIcon:setMinimumSize(iconSize)
+                            trainStatusIcon:setMaximumSize(iconSize)
+                            trainStatusIcon:setTooltip(i18Strings.unloading)
+                        elseif trainStatus == "stopped" then
+                            trainStatusIcon = api.gui.comp.ImageView.new("ui/icons/game-menu/speed@2x.tga")
+                            trainStatusIcon:setMinimumSize(api.gui.util.Size.new(19, 19))
+                            trainStatusIcon:setMaximumSize(api.gui.util.Size.new(19, 19))    
+                            trainStatusIcon:setTooltip(i18Strings.waiting)
+                        else
+                            trainStatusIcon = api.gui.comp.ImageView.new("ui/empty15.tga")
+                        end
+                        trainStatusLayout:addItem(trainStatusIcon)
+
+                        trainListTable:addRow({
+                            api.gui.comp.TextView.new(trainName),
+                            trainStatusWrapper,
+                            api.gui.comp.TextView.new(trainDepartureTime),
+                        })
+                    end
+                end
+                trainListTable:setOrder(asrHelper.getSortOrder(trainNames, "name"))
+
+                if asrState[asrEnum.SETTINGS][asrEnum.settings.TRAIN_DETAILS_ENABLED] then
+                    trainsLabel:setVisible(true, false)
+                    trainListTable:setVisible(true, false)
+                else
+                    trainsLabel:setVisible(false, false)
+                    trainListTable:setVisible(false, false)
+                end
             end
 
             if asrState[asrEnum.LINES][tostring(lineId)] ~= nil and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS] ~= nil then 
@@ -1580,7 +1821,7 @@ local function rebuildLineSettingsLayout()
                         local scheduleDeparturesLabel = api.gui.util.getById("asr.scheduleDeparturesLabel-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
 
                         if scheduleDeparturesCheckBox and scheduleDeparturesLabel then 
-                            if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_COUNT] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_COUNT] > 1 then
+                            if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST] and #asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST] > 1 then
                                 scheduleDeparturesLabel:setTooltip(i18Strings.schedule_departures_tip_on)
                                 scheduleDeparturesCheckBox:setTooltip(i18Strings.schedule_departures_tip_on)
                                 scheduleDeparturesCheckBox:setEnabled(true)
@@ -3455,11 +3696,11 @@ local function buildMainWindow()
     linesTable:setColWidth(1,25)
     linesTable:setColWidth(2,25)
     linesTable:setId("asr.linesTable")
-    -- linesTable:onHover(function (id) 
-    --     if id < 0 then 
-    --         linesTable:select(id, false)    
-    --     end
-    -- end)
+    linesTable:onHover(function (id) 
+        if id < 0 then 
+            linesTable:select(id, false)    
+        end
+    end)
     linesTable:onSelect(function (id) 
     
         -- log("gui: line table id selected: " .. id)
@@ -3639,6 +3880,25 @@ local function buildMainWindow()
         end
     end)    
     settingsTable:addRow({enableSchedulerLabel, enableSchedulerCheckBox,api.gui.comp.TextView.new("")})
+
+    local showTrackingDetailsLabel = api.gui.comp.TextView.new(i18Strings.show_tracking_details)
+    local showTrackingDetailsCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
+    showTrackingDetailsCheckBox:setId("asr.showTrackingDetails")
+    if asrState[asrEnum.SETTINGS] and asrState[asrEnum.SETTINGS][asrEnum.settings.TRAIN_DETAILS_ENABLED] then
+        showTrackingDetailsCheckBox:setSelected(true, false)
+    else
+        showTrackingDetailsCheckBox:setSelected(false, false)
+    end
+    showTrackingDetailsCheckBox:setStyleClassList({"asrCheckbox"})
+    showTrackingDetailsCheckBox:onToggle(function (checked)
+        if checked then
+            sendEngineCommand("asrSettings", { property = asrEnum.settings.TRAIN_DETAILS_ENABLED, value = true })
+        else
+            sendEngineCommand("asrSettings", { property = asrEnum.settings.TRAIN_DETAILS_ENABLED, value = false })
+        end
+    end)    
+    settingsTable:addRow({showTrackingDetailsLabel, showTrackingDetailsCheckBox,api.gui.comp.TextView.new("")})
+
 
     local enableTimingsLabel = api.gui.comp.TextView.new(i18Strings.enable_timings)
     local enableTimingsCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )

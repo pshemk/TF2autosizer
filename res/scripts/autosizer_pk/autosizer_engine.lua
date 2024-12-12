@@ -1739,9 +1739,9 @@ local function checkTrainsPositions()
 
                     -- check if scheduler is enabled for this station
                     if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.SCHEDULER_ENABLED] and 
-                        engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_COUNT] and engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_COUNT] > 1 then
+                        engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] and #engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] > 1 then
                         if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] then
-                            if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_COUNT] and engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME] then 
+                            if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] and engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME] then 
                                 -- local stationDwellTime = 10
                                 -- if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.STOP_DURATION] then 
                                 --     stationDwellTime = math.min(table.unpack(engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.STOP_DURATION]))
@@ -2108,8 +2108,9 @@ local function getLineTrainSummary(lineId)
         -- trainList = {},
     }
     local lineVehicles = api.engine.system.transportVehicleSystem.getLineVehicles(tonumber(lineId))
-    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_COUNT] = #lineVehicles
+    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST] = {}
     for _, trainId in  pairs(lineVehicles) do
+        table.insert(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST], trainId)
         local models = getTrainModels(trainId)
         if models ~= nil then
             if models.engines ~= nil then 

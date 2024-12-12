@@ -45,7 +45,8 @@ asrEnum.line.STATUS_MESSAGE                     = 10
 asrEnum.line.SETTINGS                           = 11
 asrEnum.line.LINE_ID                            = 12
 asrEnum.line.ALWAYS_TRACK                       = 13
-asrEnum.line.TRAIN_COUNT                        = 14
+-- asrEnum.line.TRAIN_COUNT                        = 14
+asrEnum.line.TRAIN_LIST                         = 15
 
 -- LINE STATION
 asrEnum.station                                 = {}
@@ -146,6 +147,7 @@ asrEnum.settings.EXTRA_CAPACITY                 = 2
 asrEnum.settings.ENABLE_TRAIN_PURCHASE          = 3
 asrEnum.settings.MINIMAL_WAGON_COUNT            = 4
 asrEnum.settings.SCHEDULER_ENABLED              = 5
+asrEnum.settings.TRAIN_DETAILS_ENABLED          = 6
 
 -- TRACKED TRAINS
 asrEnum.trackedTrain                            = {}
