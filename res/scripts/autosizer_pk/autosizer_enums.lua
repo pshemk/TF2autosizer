@@ -70,7 +70,7 @@ asrEnum.station.LENGTH_WARNING                  = 18
 asrEnum.station.STOP_DURATION                   = 19
 asrEnum.station.SCHEDULER_ENABLED               = 20
 asrEnum.station.UNLOAD_TIMESTAMP                = 21
-
+asrEnum.station.WAITING_CARGO_BACKLOG_ONLY      = 22
 
 -- LINE VEHICLES
 asrEnum.vehicle                                 = {}

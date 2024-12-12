@@ -148,11 +148,13 @@ By default all calculations use the globally defined train length to determine h
 
 ### Picking up waiting cargo
 
-Each station configuration panel has a checkbox labeled "Pick up waiting". If this option is enabled for a station - when the train pulls in any cargo currently waiting (for this line) is counted. If there's more cargo than the train could pick up based on the default calculations - the selected percentage of the surplus cargo is used to calculate the number of extra wagons that should be added in order to accommodate the waiting cargo:
+Each station configuration panel has a checkbox labeled "Pick up waiting". If this option is enabled for a station - when the train pulls in any cargo currently waiting (for this line) is counted. If there's more cargo than the train would pick up based on the default calculations - the selected percentage of the surplus cargo is used to calculate the number of extra wagons that should be added in order to accommodate the waiting cargo:
 
 ![Pickup waiting](images/pickup_waiting.png)
 
 If the slider is set to 100% the train will attempt to pick up all the waiting cargo. That is likely to result in the train being very long (and slow). Also the subsequent train might end up being quite empty, so some discretion in use of this option is advised. This option also has performance implications (more on that further on).
+
+Selecting the 'Auto-clear' checkbox means that if there's no additional (beyond what's expected from the regular calculations) cargo waiting - the "Pick up waiting" option will be switched off. This configuration can be used to clear any backlog of cargo at the station - once the backlog is gone - the trains go back to their default configurations.
 
 ### Manually adjusting wagon capacity
 
