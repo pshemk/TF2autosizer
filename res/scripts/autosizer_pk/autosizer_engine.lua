@@ -183,7 +183,7 @@ end
 local function disableLine(lineId)
     log("disabling line " .. lineId)
     engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ENABLED] = false
-    -- engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Configured"
+    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Disabled"
     -- engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = "Configured"
     engineState[asrEnum.UPDATE_TIMESTAMP] = asrHelper.getUniqueTimestamp()
 end
