@@ -66,6 +66,20 @@ function asrHelper.filterOutInvalid(array)
   end
 end
 
+function asrHelper.filterTable(array, property, matchString)
+
+  if array and type(array) == "table" then 
+    local filteredTable = {}
+    for key, value in pairs(array) do
+      if string.find(string.lower(tostring(value[property])), string.lower(matchString)) then
+          filteredTable[key] = value
+        end
+    end
+    return filteredTable
+  end
+end
+
+
 function asrHelper.inTable(table, value)
   if table == nil then
     return false

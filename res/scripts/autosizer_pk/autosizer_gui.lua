@@ -23,7 +23,10 @@ local asrGuiState = {
     shippingContractsRowMap = {},
     cargoGroupsRowMap = {},
     cargoGroupMembersRowMap = {},
-    linesRowMap = {}
+    linesRowMap = {},
+    linesFilterString = "",
+    shippingContractsFilterString = "",
+    cargoGroupsFilterString = ""
 }
 
 -- state and gui objects
@@ -79,6 +82,9 @@ local i18Strings =  {
     pickup_waiting_backlog_label_tip = _("pickup_waiting_backlog_label_tip"),
     rename_cargo_group = _("rename_cargo_group"),
     rename_shipping_contract = _("rename_shipping_contract"),
+    search_for_line = _("search_for_line"),
+    search_for_shipping_contract = _("search_for_shipping_contract"),
+    search_for_cargo_group = _("search_for_cargo_group"),
     settings = _("settings"),
     schedule_departures = _("schedule_departures"),
     schedule_departures_tip_off = _("schedule_departures_tip_off"),
@@ -1632,95 +1638,103 @@ local function  rebuildLinesTable()
             asrState[asrEnum.LINES] = {}
         end
         local validLines = asrHelper.filterOutInvalid(asrState[asrEnum.LINES])
-        local firstLineId = asrHelper.getFirstSortedKey(asrHelper.filterOutInvalid(asrState[asrEnum.LINES]), asrEnum.line.NAME)
-        for lineId,line in pairs(validLines) do
+        local filteredLines
+        if asrGuiState.linesFilterString then
+            filteredLines = asrHelper.filterTable(validLines, asrEnum.line.NAME, asrGuiState.linesFilterString)
+        else 
+            filteredLines = validLines
+        end
+        local firstLineId = asrHelper.getFirstSortedKey(filteredLines, asrEnum.line.NAME)
+        if filteredLines then 
+            for lineId,line in pairs(filteredLines) do
 
-            table.insert(asrGuiState.linesRowMap, lineId)
-            if asrGuiState.selectedLine == nil then
-                asrGuiState.selectedLine = firstLineId
-                log("gui: autoselcted line: " .. firstLineId)
-                sendEngineCommand("asrInitLine", { lineId = firstLineId })
-            end
+                table.insert(asrGuiState.linesRowMap, lineId)
+                if asrGuiState.selectedLine == nil then
+                    asrGuiState.selectedLine = firstLineId
+                    log("gui: autoselcted line: " .. firstLineId)
+                    sendEngineCommand("asrInitLine", { lineId = firstLineId })
+                end
 
-            local lineEnabled = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
-            lineEnabled:setId("asr.lineEnabled-" .. lineId)
-            if line[asrEnum.line.ENABLED] == true  then
-                lineEnabled:setSelected(true, false)
-                lineEnabled:setTooltip(i18Strings.enabled)
-            else
-                lineEnabled:setSelected(false, false)
-                lineEnabled:setTooltip(i18Strings.disabled)
-            end
-            lineEnabled:setStyleClassList({"asrCheckbox"})
-            lineEnabled:onToggle(function (checked)
-
-                if checked then
-                    log("checkbox for line " .. lineId .. " set to true")
+                local lineEnabled = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
+                lineEnabled:setId("asr.lineEnabled-" .. lineId)
+                if line[asrEnum.line.ENABLED] == true  then
+                    lineEnabled:setSelected(true, false)
                     lineEnabled:setTooltip(i18Strings.enabled)
-                    asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ENABLED] = true
-                    local lineState = {}
-                    lineState[asrEnum.line.LINE_ID] = lineId
-                    lineState[asrEnum.line.ENABLED] = true
-                    sendEngineCommand("asrLineState", lineState)
                 else
-                    log("checkbox for line " .. lineId .. " set to false")
+                    lineEnabled:setSelected(false, false)
                     lineEnabled:setTooltip(i18Strings.disabled)
-                    local lineState = {}
-                    lineState[asrEnum.line.LINE_ID] = lineId
-                    lineState[asrEnum.line.ENABLED] = false
-                    sendEngineCommand("asrLineState", lineState)
                 end
-                -- asrHelper.tlog(asrState, 1)
+                lineEnabled:setStyleClassList({"asrCheckbox"})
+                lineEnabled:onToggle(function (checked)
 
-            end)
+                    if checked then
+                        log("checkbox for line " .. lineId .. " set to true")
+                        lineEnabled:setTooltip(i18Strings.enabled)
+                        asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ENABLED] = true
+                        local lineState = {}
+                        lineState[asrEnum.line.LINE_ID] = lineId
+                        lineState[asrEnum.line.ENABLED] = true
+                        sendEngineCommand("asrLineState", lineState)
+                    else
+                        log("checkbox for line " .. lineId .. " set to false")
+                        lineEnabled:setTooltip(i18Strings.disabled)
+                        local lineState = {}
+                        lineState[asrEnum.line.LINE_ID] = lineId
+                        lineState[asrEnum.line.ENABLED] = false
+                        sendEngineCommand("asrLineState", lineState)
+                    end
+                    -- asrHelper.tlog(asrState, 1)
 
-            local lineColour = api.gui.comp.TextView.new("●")
-            lineColour:setId("asr.lineColour-" .. lineId)
-            local lineStatus = api.gui.comp.TextView.new("●")
-            lineStatus:setId("asr.lineStatus-" .. lineId)
-            local lineName = api.gui.comp.TextView.new(tostring(line[asrEnum.line.NAME]))
-            lineName:setStyleClassList({"asrLineName"})
-            lineName:setId("asr.lineName-" .. lineId)
+                end)
 
-            lineColour:setStyleClassList({"asrLineColour-" .. asrGuiHelper.getLineColour(tonumber(lineId))})
-            if line.status ~= nil then 
-                lineStatus:setStyleClassList({"asrLineStatus" .. line.status})
-                if line.statusMessage ~= nil then 
-                    lineStatus:setTooltip(line.statusMessage)
+                local lineColour = api.gui.comp.TextView.new("●")
+                lineColour:setId("asr.lineColour-" .. lineId)
+                local lineStatus = api.gui.comp.TextView.new("●")
+                lineStatus:setId("asr.lineStatus-" .. lineId)
+                local lineName = api.gui.comp.TextView.new(tostring(line[asrEnum.line.NAME]))
+                lineName:setStyleClassList({"asrLineName"})
+                lineName:setId("asr.lineName-" .. lineId)
+
+                lineColour:setStyleClassList({"asrLineColour-" .. asrGuiHelper.getLineColour(tonumber(lineId))})
+                if line.status ~= nil then 
+                    lineStatus:setStyleClassList({"asrLineStatus" .. line.status})
+                    if line.statusMessage ~= nil then 
+                        lineStatus:setTooltip(line.statusMessage)
+                    end
+                else
+                    lineStatus:setStyleClassList({"asrLineStatusDisabled"})
+                    lineStatus:setTooltip(i18Strings.disabled_for_line)    
                 end
-            else
-                lineStatus:setStyleClassList({"asrLineStatusDisabled"})
-                lineStatus:setTooltip(i18Strings.disabled_for_line)    
-            end
+                
+                local lineEditIcon = api.gui.comp.ImageView.new("ui/modify16.tga")
+                local lineEditButton = api.gui.comp.Button.new(lineEditIcon, false)
+                lineEditButton:onClick(function ()
+
+                    local lineSettingsLayout = api.gui.util.getById("asr.settingsScrollAreaLayout")
+                    asrGuiState.selectedLine = lineId
+                    asrGuiState.lineSettingsTableBuilt = false
+                    asrGuiState.settingsTableInitalising = true
+                    if asrGuiObjects.lineSettingsDropDownList ~= nil then
+                        asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
+                    end
+                    rebuildLineSettingsLayout()
+
+                    sendEngineCommand("asrInitLine", { lineId = lineId })
             
-            local lineEditIcon = api.gui.comp.ImageView.new("ui/modify16.tga")
-            local lineEditButton = api.gui.comp.Button.new(lineEditIcon, false)
-            lineEditButton:onClick(function ()
+                end)
 
-                local lineSettingsLayout = api.gui.util.getById("asr.settingsScrollAreaLayout")
-                asrGuiState.selectedLine = lineId
-                asrGuiState.lineSettingsTableBuilt = false
-                asrGuiState.settingsTableInitalising = true
-                if asrGuiObjects.lineSettingsDropDownList ~= nil then
-                    asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
-                end
-                rebuildLineSettingsLayout()
+                lineEditIcon:setStyleClassList({"asrLineEditButton"})
+                lineName:setTooltip(tostring(lineId))
 
-                sendEngineCommand("asrInitLine", { lineId = lineId })
-        
-            end)
-
-            lineEditIcon:setStyleClassList({"asrLineEditButton"})
-            lineName:setTooltip(tostring(lineId))
-
-            -- asrHelper.getLineDetails(line.id)
-            linesTable:addRow({lineColour, lineEnabled, lineStatus, lineName})
+                -- asrHelper.getLineDetails(line.id)
+                linesTable:addRow({lineColour, lineEnabled, lineStatus, lineName})
+            end
+            if asrState[asrEnum.LINES] ~= nil then 
+                linesTable:setOrder(asrHelper.getSortOrder(filteredLines, asrEnum.line.NAME))
+            end
+            -- hack to make sure the scrolling back to the right position happens after the table has been redrawn
+            linesScrollArea:invokeLater(function () linesScrollArea:invokeLater(function () linesScrollArea:setScrollOffset(linesScrollOffset) end ) end )
         end
-        if asrState[asrEnum.LINES] ~= nil then 
-            linesTable:setOrder(asrHelper.getSortOrder(validLines, asrEnum.line.NAME))
-        end
-        -- hack to make sure the scrolling back to the right position happens after the table has been redrawn
-        linesScrollArea:invokeLater(function () linesScrollArea:invokeLater(function () linesScrollArea:setScrollOffset(linesScrollOffset) end ) end )
     else
         log(" can't get lines table" )
     end
@@ -1733,10 +1747,18 @@ local function refreshLinesTable()
     local linesTable = api.gui.util.getById("asr.linesTable")
     if linesTable ~= nil then
 
+
         local validLines = asrHelper.filterOutInvalid(asrState[asrEnum.LINES])
-        local firstLineId = asrHelper.getFirstSortedKey(asrHelper.filterOutInvalid(asrState[asrEnum.LINES]), asrEnum.line.NAME)
-        if validLines then
-            for lineId,line in pairs(validLines) do
+        local filteredLines
+        if asrGuiState.linesFilterString then
+            filteredLines = asrHelper.filterTable(validLines, asrEnum.line.NAME, asrGuiState.linesFilterString)
+        else 
+            filteredLines = validLines
+        end
+        local firstLineId = asrHelper.getFirstSortedKey(filteredLines, asrEnum.line.NAME)
+
+        if filteredLines then
+            for lineId,line in pairs(filteredLines) do
 
                 if asrGuiState.selectedLine == nil then
                     asrGuiState.selectedLine = firstLineId
@@ -1846,6 +1868,12 @@ local function rebuildShippingContractsLayout()
         local shippingContractsScrollWrapper = api.gui.comp.Component.new("asr.shippingContractsScrollWrapper")
         shippingContractsScrollWrapper:setLayout(shippingContractsScrollLayout)
 
+        local shippingContractsScrollHeaderLayout = api.gui.layout.BoxLayout.new("HORIZONTAL");
+        local shippingContractsScrollHeaderWrapper = api.gui.comp.Component.new("asr.shippingContractsScrollHeaderWrapper")
+        shippingContractsScrollHeaderWrapper:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.shippingContractsScrollArea.width + 90, 27))
+        shippingContractsScrollHeaderWrapper:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.shippingContractsScrollArea.width + 90, 27))
+        shippingContractsScrollHeaderWrapper:setLayout(shippingContractsScrollHeaderLayout)
+
         local shippingContractsScrollArea = api.gui.comp.ScrollArea.new(api.gui.comp.TextView.new('shippingContractsScrollArea'), "asr.shippingContractsScrollArea")
         shippingContractsScrollArea:setId("asr.shippingContractsScrollArea")
         shippingContractsScrollArea:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.shippingContractsScrollArea.width, asrGuiDimensions.shippingContractsScrollArea.height))
@@ -1866,6 +1894,21 @@ local function rebuildShippingContractsLayout()
             sendEngineCommand("asrUpdateShippingContract", { shippingContractId = shippingContractId, property = asrEnum.shippingContract.NAME, value = "Shipping contract #" .. shippingContractId })
             asrGuiState.rebuildShippingContractsSettingsTable = true
         end)
+
+        local shippingContractsFilterTextInput = api.gui.comp.TextInputField.new(i18Strings.search_for_shipping_contract)
+        shippingContractsFilterTextInput:setGravity(-1,-1)
+        shippingContractsFilterTextInput:setMaxLength(22)
+        shippingContractsFilterTextInput:setMinimumSize(api.gui.util.Size.new(180, 18))
+        shippingContractsFilterTextInput:setMaximumSize(api.gui.util.Size.new(180, 18))
+        shippingContractsFilterTextInput:onChange(function (string)
+            asrGuiState.shippingContractsFilterString = string
+            asrGuiState.rebuildShippingContractsTable = true
+            rebuildShippingContractsLayout()
+        end)
+
+        shippingContractsScrollHeaderLayout:addItem(newShippingContractButton)
+        shippingContractsScrollHeaderLayout:addItem(shippingContractsFilterTextInput)
+        shippingContractsScrollLayout:addItem(shippingContractsScrollHeaderWrapper)
 
         shippingContractsTable = api.gui.comp.Table.new(4, 'SINGLE')
         shippingContractsTable:setColWidth(1,asrGuiDimensions.shippingContractsScrollArea.width - 100)
@@ -1904,7 +1947,6 @@ local function rebuildShippingContractsLayout()
         asrGuiObjects.shippingContractsTable = shippingContractsTable
 
         shippingContractsScrollArea:setContent(shippingContractsTable)
-        shippingContractsScrollLayout:addItem(newShippingContractButton)
         shippingContractsScrollLayout:addItem(shippingContractsScrollArea)
         shippingContractsLayout:addItem(shippingContractsScrollWrapper)
 
@@ -1972,7 +2014,14 @@ local function rebuildShippingContractsLayout()
         end
 
         if asrState[asrEnum.SHIPPING_CONTRACTS] then 
-            for shippingContractId, shippingContract in pairs(asrState[asrEnum.SHIPPING_CONTRACTS]) do
+
+            local filteredShippingContracts
+            if asrGuiState.shippingContractsFilterString then
+                filteredShippingContracts  = asrHelper.filterTable(asrState[asrEnum.SHIPPING_CONTRACTS], asrEnum.shippingContract.NAME, asrGuiState.shippingContractsFilterString)
+            else 
+                filteredShippingContracts  = asrState[asrEnum.SHIPPING_CONTRACTS]
+            end
+            for shippingContractId, shippingContract in pairs(filteredShippingContracts) do
                 local shippingContractCargoIcon
                 if shippingContract[asrEnum.shippingContract.CARGO_ID] and cargoTypes and cargoTypes[tonumber(shippingContract[asrEnum.shippingContract.CARGO_ID])] then
                     shippingContractCargoIcon = api.gui.comp.ImageView.new("ui/hud/cargo_" .. string.lower(cargoTypes[tonumber(shippingContract[asrEnum.shippingContract.CARGO_ID])]) .. "@2x.tga")
@@ -2061,7 +2110,7 @@ local function rebuildShippingContractsLayout()
                 shippingContractsTable:addRow({shippingContractCargoIcon, shippingContractNameWrapper , shippingContractEditButton, shippingContractDeleteButton})
                 table.insert(asrGuiState.shippingContractsRowMap, shippingContractId)
             end
-            shippingContractsTable:setOrder(asrHelper.getSortOrder(asrState[asrEnum.SHIPPING_CONTRACTS], asrEnum.shippingContract.NAME))
+            shippingContractsTable:setOrder(asrHelper.getSortOrder(filteredShippingContracts, asrEnum.shippingContract.NAME))
 
             for id, shippingContractId in pairs(asrGuiState.shippingContractsRowMap) do
                 if tostring(shippingContractId) == tostring(selectedShippingContractId) then
@@ -2387,8 +2436,14 @@ local function rebuildShippingContractsLayout()
             -- just a refresh
 
             if asrState[asrEnum.SHIPPING_CONTRACTS] then 
-                -- print("gui: rebuildShippingContractsLayout: running refresh of the shipping contract table")
-                for shippingContractId, shippingContract in pairs(asrState[asrEnum.SHIPPING_CONTRACTS]) do    
+                local filteredShippingContracts
+                if asrGuiState.shippingContractsFilterString then
+                    filteredShippingContracts  = asrHelper.filterTable(asrState[asrEnum.SHIPPING_CONTRACTS], asrEnum.shippingContract.NAME, asrGuiState.shippingContractsFilterString)
+                else 
+                    filteredShippingContracts  = asrState[asrEnum.SHIPPING_CONTRACTS]
+                end
+                for shippingContractId, shippingContract in pairs(filteredShippingContracts) do
+                    
                     local shippingContractCargoIcon = api.gui.util.getById("asr.shippingContractCargoIcon-" .. tostring(shippingContractId))
                     local shippingContractNameTextInput = api.gui.util.getById("asr.shippingContractNameTextInput-" .. tostring(shippingContractId))
                     local shippingContractNameLabel = api.gui.util.getById("asr.shippingContractNameLabel-" .. tostring(shippingContractId))
@@ -2421,7 +2476,7 @@ local function rebuildShippingContractsLayout()
                         end    
                     end
                 end
-                shippingContractsTable:setOrder(asrHelper.getSortOrder(asrState[asrEnum.SHIPPING_CONTRACTS], asrEnum.shippingContract.NAME))
+                shippingContractsTable:setOrder(asrHelper.getSortOrder(filteredShippingContracts, asrEnum.shippingContract.NAME))
             end
     
             local shippingContractSettingsNameLabel = api.gui.util.getById("asr.shippingContractSettingsNameLabel-" .. selectedShippingContractId)
@@ -2519,6 +2574,12 @@ local function rebuildCargoGroupsLayout()
         local cargoGroupsScrollWrapper = api.gui.comp.Component.new("asr.cargoGroupsScrollWrapper")
         cargoGroupsScrollWrapper:setLayout(cargoGroupsScrollLayout)
 
+        local cargoGroupsScrollHeaderLayout = api.gui.layout.BoxLayout.new("HORIZONTAL");
+        local cargoGroupsScrollHeaderWrapper = api.gui.comp.Component.new("asr.cargoGroupsScrollHeaderWrapper")
+        cargoGroupsScrollHeaderWrapper:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.cargoGroupsScrollArea.width + 200, 27))
+        cargoGroupsScrollHeaderWrapper:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.cargoGroupsScrollArea.width + 200, 27))
+        cargoGroupsScrollHeaderWrapper:setLayout(cargoGroupsScrollHeaderLayout)
+ 
         local cargoGroupsScrollArea = api.gui.comp.ScrollArea.new(api.gui.comp.TextView.new('cargoGroupsScrollArea'), "asr.cargoGroupsScrollArea")
         cargoGroupsScrollArea:setId("asr.cargoGroupsScrollArea")
         cargoGroupsScrollArea:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.cargoGroupsScrollArea.width, asrGuiDimensions.cargoGroupsScrollArea.height))
@@ -2539,6 +2600,21 @@ local function rebuildCargoGroupsLayout()
             sendEngineCommand("asrUpdateCargoGroup", { cargoGroupId = cargoGroupId, property = asrEnum.cargoGroup.NAME, value = "Cargo group #" .. cargoGroupId })
             asrGuiState.rebuildCargoGroupsSettingsTable = true
         end)
+
+        local cargoGroupsFilterTextInput = api.gui.comp.TextInputField.new(i18Strings.search_for_cargo_group)
+        cargoGroupsFilterTextInput:setGravity(-1,-1)
+        cargoGroupsFilterTextInput:setMaxLength(22)
+        cargoGroupsFilterTextInput:setMinimumSize(api.gui.util.Size.new(180, 18))
+        cargoGroupsFilterTextInput:setMaximumSize(api.gui.util.Size.new(180, 18))
+        cargoGroupsFilterTextInput:onChange(function (string)
+            asrGuiState.cargoGroupsFilterString = string
+            asrGuiState.rebuildCargoGroupsTable = true
+            rebuildCargoGroupsLayout()
+        end)
+
+        cargoGroupsScrollHeaderLayout:addItem(newCargoGroupButton)
+        cargoGroupsScrollHeaderLayout:addItem(cargoGroupsFilterTextInput)
+        cargoGroupsScrollLayout:addItem(cargoGroupsScrollHeaderWrapper)
 
         cargoGroupsTable = api.gui.comp.Table.new(4, 'SINGLE')
         cargoGroupsTable:setColWidth(1,asrGuiDimensions.cargoGroupsScrollArea.width - 100)
@@ -2577,7 +2653,6 @@ local function rebuildCargoGroupsLayout()
         asrGuiObjects.cargoGroupsTable = cargoGroupsTable
 
         cargoGroupsScrollArea:setContent(cargoGroupsTable)
-        cargoGroupsScrollLayout:addItem(newCargoGroupButton)
         cargoGroupsScrollLayout:addItem(cargoGroupsScrollArea)
         cargoGroupsLayout:addItem(cargoGroupsScrollWrapper)
 
@@ -2643,8 +2718,15 @@ local function rebuildCargoGroupsLayout()
         end
 
         if asrState[asrEnum.CARGO_GROUPS] then 
+            local filteredCargoGroups
+            if asrGuiState.cargoGroupsFilterString then
+                filteredCargoGroups  = asrHelper.filterTable(asrState[asrEnum.CARGO_GROUPS], asrEnum.cargoGroup.NAME, asrGuiState.cargoGroupsFilterString)
+            else 
+                filteredCargoGroups  = asrState[asrEnum.CARGO_GROUPS]
+            end
+
             log("gui: rebuildCargoGroupsLayout: cargo group table rebuild start here")
-            for cargoGroupId, cargoGroup in pairs(asrState[asrEnum.CARGO_GROUPS]) do
+            for cargoGroupId, cargoGroup in pairs(filteredCargoGroups) do
                 local cargoGroupCargoIcon
                 -- if cargoGroup[asrEnum.cargoGroup.CARGO_ID] and cargoTypes and cargoTypes[tonumber(cargoGroup[asrEnum.cargoGroup.CARGO_ID])] then
                 --     cargoGroupCargoIcon = api.gui.comp.ImageView.new("ui/hud/cargo_" .. string.lower(cargoTypes[tonumber(cargoGroup[asrEnum.cargoGroup.CARGO_ID])]) .. "@2x.tga")
@@ -2733,7 +2815,7 @@ local function rebuildCargoGroupsLayout()
                 cargoGroupsTable:addRow({cargoGroupCargoIcon, cargoGroupNameWrapper , cargoGroupEditButton, cargoGroupDeleteButton})
                 table.insert(asrGuiState.cargoGroupsRowMap, cargoGroupId)
             end
-            cargoGroupsTable:setOrder(asrHelper.getSortOrder(asrState[asrEnum.CARGO_GROUPS], asrEnum.cargoGroup.NAME))
+            cargoGroupsTable:setOrder(asrHelper.getSortOrder(filteredCargoGroups, asrEnum.cargoGroup.NAME))
 
             for id, cargoGroupId in pairs(asrGuiState.cargoGroupsRowMap) do
                 if tostring(cargoGroupId) == tostring(selectedCargoGroupId) then
@@ -3180,8 +3262,16 @@ local function rebuildCargoGroupsLayout()
 
             -- just a refresh
             if asrState[asrEnum.CARGO_GROUPS] then 
+
+                local filteredCargoGroups
+                if asrGuiState.cargoGroupsFilterString then
+                    filteredCargoGroups  = asrHelper.filterTable(asrState[asrEnum.CARGO_GROUPS], asrEnum.cargoGroup.NAME, asrGuiState.cargoGroupsFilterString)
+                else 
+                    filteredCargoGroups  = asrState[asrEnum.CARGO_GROUPS]
+                end
+
                 -- log("gui: rebuildCargoGroupsLayout: running refresh of the cargo groups table")
-                for cargoGroupId, cargoGroup in pairs(asrState[asrEnum.CARGO_GROUPS]) do    
+                for cargoGroupId, cargoGroup in pairs(filteredCargoGroups) do    
                     local cargoGroupCargoIcon = api.gui.util.getById("asr.cargoGroupCargoIcon-" .. tostring(cargoGroupId))
                     local cargoGroupNameTextInput = api.gui.util.getById("asr.cargoGroupNameTextInput-" .. tostring(cargoGroupId))
                     local cargoGroupNameLabel = api.gui.util.getById("asr.cargoGroupNameLabel-" .. tostring(cargoGroupId))
@@ -3209,7 +3299,7 @@ local function rebuildCargoGroupsLayout()
                         end    
                     end
                 end
-                cargoGroupsTable:setOrder(asrHelper.getSortOrder(asrState[asrEnum.CARGO_GROUPS], asrEnum.cargoGroup.NAME))
+                cargoGroupsTable:setOrder(asrHelper.getSortOrder(filteredCargoGroups, asrEnum.cargoGroup.NAME))
             end
     
             local cargoGroupSettingsNameLabel = api.gui.util.getById("asr.cargoGroupSettingsNameLabel-" .. selectedCargoGroupId)
@@ -3342,19 +3432,33 @@ local function buildMainWindow()
     local linesScrollArea = api.gui.comp.ScrollArea.new(api.gui.comp.TextView.new('linesScrollArea'), "asr.linesScrollArea")
     linesScrollArea:setId("asr.linesScrollArea")
 
+    local linesScrollAreaLayout = api.gui.layout.BoxLayout.new("VERTICAL")
+    local linesScrollAreaComponent = api.gui.comp.Component.new("asr.linesScrollAreaComponent")
+    linesScrollAreaComponent:setLayout(linesScrollAreaLayout)
+
+    local linesScrollFilterTextInput = api.gui.comp.TextInputField.new(i18Strings.search_for_line)
+    linesScrollFilterTextInput:setGravity(1,1)
+    linesScrollFilterTextInput:setMaxLength(22)
+    linesScrollFilterTextInput:setMinimumSize(api.gui.util.Size.new(180, 18))
+    linesScrollFilterTextInput:setMaximumSize(api.gui.util.Size.new(180, 18))
+    linesScrollFilterTextInput:onChange(function (string)
+        asrGuiState.linesFilterString = string
+        rebuildLinesTable()
+    end)
+
     local linesTable = api.gui.comp.Table.new(4, 'SINGLE')
     linesTable:setColWidth(0,25)
     linesTable:setColWidth(1,25)
     linesTable:setColWidth(2,25)
     linesTable:setId("asr.linesTable")
-    linesTable:onHover(function (id) 
-        if id < 0 then 
-            linesTable:select(id, false)    
-        end
-    end)
+    -- linesTable:onHover(function (id) 
+    --     if id < 0 then 
+    --         linesTable:select(id, false)    
+    --     end
+    -- end)
     linesTable:onSelect(function (id) 
     
-        log("gui: line table id selected: " .. id)
+        -- log("gui: line table id selected: " .. id)
         if id >= 0 then
             log("gui: line id selected: " .. asrGuiState.linesRowMap[id + 1])
             asrGuiState.selectedLine = asrGuiState.linesRowMap[id + 1]
@@ -3370,7 +3474,9 @@ local function buildMainWindow()
     end)
     linesScrollArea:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.linesScrollArea.width, asrGuiDimensions.linesScrollArea.height))
     linesScrollArea:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.linesScrollArea.width, asrGuiDimensions.linesScrollArea.height))
-    linesScrollArea:setContent(linesTable)
+    linesScrollAreaLayout:addItem(linesScrollFilterTextInput)
+    linesScrollAreaLayout:addItem(linesTable)
+    linesScrollArea:setContent(linesScrollAreaComponent)
 
     linesTabLayout:addItem(linesScrollArea)
 
