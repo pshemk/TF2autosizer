@@ -26,7 +26,8 @@ local asrGuiState = {
     linesRowMap = {},
     linesFilterString = "",
     shippingContractsFilterString = "",
-    cargoGroupsFilterString = ""
+    cargoGroupsFilterString = "",
+    linesSelectorHover = -1,
 }
 
 -- state and gui objects
@@ -3316,25 +3317,31 @@ local function buildMainWindow()
     linesTable:setColWidth(1,25)
     linesTable:setColWidth(2,25)
     linesTable:setId("asr.linesTable")
-    -- linesTable:onHover(function (id) 
-    --     if id < 0 then 
-    --         linesTable:select(id, false)    
-    --     end
-    -- end)
+    linesTable:onHover(function (id) 
+        -- log("gui: line table id hover: " .. id)
+
+        if id >= 0 then
+            asrGuiState.linesSelectorHover = id
+        end
+        if id < 0 then 
+            linesTable:select(id, false)    
+        end
+    end)
     linesTable:onSelect(function (id) 
     
         -- log("gui: line table id selected: " .. id)
-        if id >= 0 then
-            log("gui: line id selected: " .. asrGuiState.linesRowMap[id + 1])
+        if id >= 0 and id == asrGuiState.linesSelectorHover then
+            -- log("gui: line id selected: (" .. id .. ") " .. asrGuiState.linesRowMap[id + 1])
             asrGuiState.selectedLine = asrGuiState.linesRowMap[id + 1]
             asrGuiState.lineSettingsTableBuilt = false
             asrGuiState.settingsTableInitalising = true
             if asrGuiObjects.lineSettingsDropDownList ~= nil then
                 asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
             end
-            rebuildLineSettingsLayout()
 
             sendEngineCommand("asrInitLine", { lineId = asrGuiState.linesRowMap[id + 1] })
+            -- linesTable:select(-1, false)    
+            rebuildLineSettingsLayout()
         end
     end)
     linesScrollArea:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.linesScrollArea.width, asrGuiDimensions.linesScrollArea.height))
