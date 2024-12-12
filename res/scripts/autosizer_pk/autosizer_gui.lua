@@ -73,6 +73,8 @@ local i18Strings =  {
     new_shipping_contract = _("new_shipping_contract"),
     pickup_waiting = _("pickup_waiting"),
     pickup_waiting_tip = _("pickup_waiting_tip"),
+    pickup_waiting_backlog_label = _("pickup_waiting_backlog_label"),
+    pickup_waiting_backlog_label_tip = _("pickup_waiting_backlog_label_tip"),
     rename_cargo_group = _("rename_cargo_group"),
     rename_shipping_contract = _("rename_shipping_contract"),
     settings = _("settings"),
@@ -995,8 +997,8 @@ local function rebuildLineSettingsLayout()
                         amountSelectionFixedAmountTextInput:setText(tostring(station[asrEnum.station.FIXED_AMOUNT_VALUE]), false)
                     end
                     amountSelectionFixedAmountTextInput:setMaxLength(5)
-                    amountSelectionFixedAmountTextInput:setMinimumSize(api.gui.util.Size.new(40, 20))
-                    amountSelectionFixedAmountTextInput:setMaximumSize(api.gui.util.Size.new(40, 20))
+                    amountSelectionFixedAmountTextInput:setMinimumSize(api.gui.util.Size.new(40, 18))
+                    amountSelectionFixedAmountTextInput:setMaximumSize(api.gui.util.Size.new(40, 18))
                     amountSelectionFixedAmountTextInput:setId("asr.amountSelectionFixedAmountInput-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
                     amountSelectionFixedAmountTextInput:onFocusChange(function (hasFocus) 
                         if not hasFocus then
@@ -1061,25 +1063,50 @@ local function rebuildLineSettingsLayout()
                     waitingCargoSelectorWrapper:setLayout(waitingCargoSelectorLayout)
 
                     local waitingCargoSelectorSlider = api.gui.comp.Slider.new(true)
+                    waitingCargoSelectorSlider:setId("asr.waitingCargoSelectorSlider-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
                     local waitingCargoSelectorValue = api.gui.comp.TextView.new("")
+                    waitingCargoSelectorValue:setId("asr.waitingCargoSelectorValue-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                    waitingCargoSelectorValue:setMinimumSize(api.gui.util.Size.new(35, 18))
+                    waitingCargoSelectorValue:setMaximumSize(api.gui.util.Size.new(35, 18))
                     if station[asrEnum.station.WAITING_CARGO_VALUE] ~= nil then
                         waitingCargoSelectorSlider:setDefaultValue(station[asrEnum.station.WAITING_CARGO_VALUE]/10)
                         waitingCargoSelectorSlider:setValue(tonumber(station[asrEnum.station.WAITING_CARGO_VALUE])/10, false)
-                        waitingCargoSelectorValue:setText(tonumber(station[asrEnum.station.WAITING_CARGO_VALUE]) .. "%")
+                        waitingCargoSelectorValue:setText(tostring(tonumber(station[asrEnum.station.WAITING_CARGO_VALUE]))  .. "%")
                     else
-                        waitingCargoSelectorValue:setText("0%")
+                        waitingCargoSelectorValue:setText("  0%")
                     end
                     waitingCargoSelectorSlider:setMaximum(10)
                     waitingCargoSelectorSlider:setMinimum(0)
                     -- waitingCargoSelectorSlider:setStep(10)
-                    waitingCargoSelectorSlider:setMinimumSize(api.gui.util.Size.new(150, 20))
-                    waitingCargoSelectorSlider:setMaximumSize(api.gui.util.Size.new(150, 20))
+                    waitingCargoSelectorSlider:setMinimumSize(api.gui.util.Size.new(140, 18))
+                    waitingCargoSelectorSlider:setMaximumSize(api.gui.util.Size.new(140, 18))
                     waitingCargoSelectorSlider:onValueChanged(function (value) 
                         sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config  = { [asrEnum.station.WAITING_CARGO_VALUE] = tonumber(value) * 10}})                        
                         waitingCargoSelectorValue:setText(tostring(value * 10).."%")
                     end)
+
+                    local waitingCargoBacklogOnlyCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
+                    waitingCargoBacklogOnlyCheckBox:setId("asr.waitingCargoBacklogOnlyCheckbox-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                    local waitingCargoBacklogOnlyLabel = api.gui.comp.TextView.new(i18Strings.pickup_waiting_backlog_label)
+                    waitingCargoBacklogOnlyLabel:setId("asr.waitingCargoBacklogOnlyLabel-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                    waitingCargoBacklogOnlyLabel:setTooltip(i18Strings.pickup_waiting_backlog_label_tip)
+                    if station[asrEnum.station.WAITING_CARGO_BACKLOG_ONLY] then 
+                        waitingCargoBacklogOnlyCheckBox:setSelected(true, false)
+                    else
+                        waitingCargoBacklogOnlyCheckBox:setSelected(false, false)
+                    end
+                    waitingCargoBacklogOnlyCheckBox:onToggle(function (checked)
+                        if checked then
+                            sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config = { [asrEnum.station.WAITING_CARGO_BACKLOG_ONLY] = true  }})
+                        else
+                            sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config = { [asrEnum.station.WAITING_CARGO_BACKLOG_ONLY] = false  }})
+                        end
+                    end)
+
                     waitingCargoSelectorLayout:addItem(waitingCargoSelectorSlider)
                     waitingCargoSelectorLayout:addItem(waitingCargoSelectorValue)
+                    waitingCargoSelectorLayout:addItem(waitingCargoBacklogOnlyCheckBox)
+                    waitingCargoSelectorLayout:addItem(waitingCargoBacklogOnlyLabel)
 
                     if station[asrEnum.station.WAITING_CARGO_ENABLED] == true then
                         waitingCargoCheckBox:setSelected(true, false)
@@ -1087,12 +1114,21 @@ local function rebuildLineSettingsLayout()
                         waitingCargoSelectorSlider:setVisible(true, false)
                         waitingCargoSelectorValue:setEnabled(true)
                         waitingCargoSelectorValue:setVisible(true, false)
+                        waitingCargoBacklogOnlyCheckBox:setEnabled(true)
+                        waitingCargoBacklogOnlyCheckBox:setVisible(true, false)
+                        waitingCargoBacklogOnlyLabel:setEnabled(true)
+                        waitingCargoBacklogOnlyLabel:setVisible(true, false)
+
                     else
                         waitingCargoCheckBox:setSelected(false, false)
                         waitingCargoSelectorSlider:setEnabled(false)
                         waitingCargoSelectorSlider:setVisible(false, false)
                         waitingCargoSelectorValue:setEnabled(false)
                         waitingCargoSelectorValue:setVisible(false, false)
+                        waitingCargoBacklogOnlyCheckBox:setEnabled(false)
+                        waitingCargoBacklogOnlyCheckBox:setVisible(false, false)
+                        waitingCargoBacklogOnlyLabel:setEnabled(false)
+                        waitingCargoBacklogOnlyLabel:setVisible(false, false)
                     end
                     waitingCargoCheckBox:onToggle(function (checked)
                         if checked then
@@ -1101,12 +1137,21 @@ local function rebuildLineSettingsLayout()
                             waitingCargoSelectorSlider:setVisible(true, false)
                             waitingCargoSelectorValue:setEnabled(true)
                             waitingCargoSelectorValue:setVisible(true, false)
+                            waitingCargoBacklogOnlyCheckBox:setEnabled(true)
+                            waitingCargoBacklogOnlyCheckBox:setVisible(true, false)
+                            waitingCargoBacklogOnlyLabel:setEnabled(true)
+                            waitingCargoBacklogOnlyLabel:setVisible(true, false)    
                         else
                             sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config = { [asrEnum.station.WAITING_CARGO_ENABLED] = false  }})
                             waitingCargoSelectorSlider:setEnabled(false)
                             waitingCargoSelectorSlider:setVisible(false, false)
                             waitingCargoSelectorValue:setEnabled(false)
                             waitingCargoSelectorValue:setVisible(false, false)
+                            waitingCargoBacklogOnlyCheckBox:setEnabled(false)
+                            waitingCargoBacklogOnlyCheckBox:setVisible(false, false)
+                            waitingCargoBacklogOnlyLabel:setEnabled(false)
+                            waitingCargoBacklogOnlyLabel:setVisible(false, false)
+    
                         end
                         asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
 
@@ -1136,8 +1181,8 @@ local function rebuildLineSettingsLayout()
                     capacityAdjustmentSelectorSlider:setMaximum(6)
                     capacityAdjustmentSelectorSlider:setMinimum(-6)
                     -- capacityAdjustmentSelectorSlider:setStep(10)
-                    capacityAdjustmentSelectorSlider:setMinimumSize(api.gui.util.Size.new(150, 20))
-                    capacityAdjustmentSelectorSlider:setMaximumSize(api.gui.util.Size.new(150, 20))
+                    capacityAdjustmentSelectorSlider:setMinimumSize(api.gui.util.Size.new(140, 18))
+                    capacityAdjustmentSelectorSlider:setMaximumSize(api.gui.util.Size.new(140, 18))
                     capacityAdjustmentSelectorSlider:onValueChanged(function (value) 
                         sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config  = { [asrEnum.station.CAPACITY_ADJUSTMENT_VALUE] = tonumber(value)*5}})                        
                         capacityAdjustmentSelectorValue:setText(tostring(value*5).."%")
@@ -1419,6 +1464,37 @@ local function rebuildLineSettingsLayout()
                         amountSelectionCargoGroupButton:setContent(amountSelectionCargoGroupButtonLayout)
                     end
 
+                    -- auto pickup
+                    local waitingCargoCheckBox = api.gui.util.getById("asr.waitingCargoCheckbox-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                    local waitingCargoSelectorSlider = api.gui.util.getById("asr.waitingCargoSelectorSlider-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                    local waitingCargoSelectorValue = api.gui.util.getById("asr.waitingCargoSelectorValue-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                    local waitingCargoBacklogOnlyCheckBox = api.gui.util.getById("asr.waitingCargoBacklogOnlyCheckbox-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                    local waitingCargoBacklogOnlyLabel = api.gui.util.getById("asr.waitingCargoBacklogOnlyLabel-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                    if waitingCargoCheckBox and waitingCargoSelectorSlider and waitingCargoSelectorValue and waitingCargoBacklogOnlyCheckBox and waitingCargoBacklogOnlyLabel then
+                        if station[asrEnum.station.WAITING_CARGO_ENABLED] == true then
+                            waitingCargoCheckBox:setSelected(true, false)
+                            waitingCargoSelectorSlider:setEnabled(true)
+                            waitingCargoSelectorSlider:setVisible(true, false)
+                            waitingCargoSelectorValue:setEnabled(true)
+                            waitingCargoSelectorValue:setVisible(true, false)
+                            waitingCargoBacklogOnlyCheckBox:setEnabled(true)
+                            waitingCargoBacklogOnlyCheckBox:setVisible(true, false)
+                            waitingCargoBacklogOnlyLabel:setEnabled(true)
+                            waitingCargoBacklogOnlyLabel:setVisible(true, false)
+    
+                        else
+                            waitingCargoCheckBox:setSelected(false, false)
+                            waitingCargoSelectorSlider:setEnabled(false)
+                            waitingCargoSelectorSlider:setVisible(false, false)
+                            waitingCargoSelectorValue:setEnabled(false)
+                            waitingCargoSelectorValue:setVisible(false, false)
+                            waitingCargoBacklogOnlyCheckBox:setEnabled(false)
+                            waitingCargoBacklogOnlyCheckBox:setVisible(false, false)
+                            waitingCargoBacklogOnlyLabel:setEnabled(false)
+                            waitingCargoBacklogOnlyLabel:setVisible(false, false)
+                        end
+                    end
+                    
                     local currentValue = station[asrEnum.station.CARGO_AMOUNT]
                     if not currentValue then currentValue = 0 end 
 

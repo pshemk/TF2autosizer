@@ -1385,6 +1385,14 @@ local function generateTrainConfig(trainId, lineId, stopIndex)
                 -- extra wagons needed
                 additionalWagonCount = math.ceil((cargoEntityCounter - requiredCapacity) * engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.WAITING_CARGO_VALUE]/100/engineState[asrEnum.MODEL_CACHE][tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][1])][asrEnum.modelCache.CAPACITY])
                 log("engine: train " .. getTrainName(trainId) .. " adding extra " .. additionalWagonCount .. " wagon(s)")
+            else 
+                if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.WAITING_CARGO_BACKLOG_ONLY] then
+                    -- there is no backlog any more - clear the flag
+                    log("engine: train " .. getTrainName(trainId) .. " backlog cleared - disabling automatic pick up")
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.WAITING_CARGO_ENABLED] = false
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.WAITING_CARGO_BACKLOG_ONLY] = false
+                    engineState[asrEnum.UPDATE_TIMESTAMP] = asrHelper.getUniqueTimestamp()
+                end
             end
         end
 

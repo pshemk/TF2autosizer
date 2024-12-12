@@ -66,6 +66,7 @@ asrEnum.station.SHIPPING_CONTRACT_CARGO_ID      = 16
 asrEnum.station.CARGO_GROUP_ID                  = 17
 asrEnum.station.LENGTH_WARNING                  = 18
 asrEnum.station.STOP_DURATION                   = 19
+asrEnum.station.WAITING_CARGO_BACKLOG_ONLY      = 22
 
 -- LINE VEHICLES
 asrEnum.vehicle                                 = {}
