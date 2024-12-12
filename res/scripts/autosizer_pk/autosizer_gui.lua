@@ -3341,11 +3341,12 @@ local function buildMainWindow()
     linesScrollArea:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.linesScrollArea.width, asrGuiDimensions.linesScrollArea.height))
    
     linesScrollAreaLayout:addItem(linesTable)
-    linesScrollLayout:addItem(linesScrollFilterTextInput)
-    linesScrollLayout:addItem(linesScrollAreaComponent)
-    linesScrollArea:setContent(linesScrollWrapper)
+    linesScrollArea:setContent(linesScrollAreaComponent)
 
-    linesTabLayout:addItem(linesScrollArea)
+    linesScrollLayout:addItem(linesScrollFilterTextInput)
+    linesScrollLayout:addItem(linesScrollArea)
+
+    linesTabLayout:addItem(linesScrollWrapper)
 
     local lineSettingsScrollArea = api.gui.comp.ScrollArea.new(api.gui.comp.TextView.new('lineSettingsScrollArea'), "asr.lineSettingsScrollArea")
     lineSettingsScrollArea:setId("asr.lineSettingsScrollArea")
