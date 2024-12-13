@@ -108,9 +108,13 @@ end
 function asrGuiHelper.getLineColour(line)
     if type(line) == "string" then line = tonumber(line) end
     if not(type(line) == "number") then return "default" end
-    local colour = api.engine.getComponent(line, api.type.ComponentType.COLOR)
-    if (colour and  colour.color) then
-        return getColourString(colour.color.x, colour.color.y, colour.color.z)
+    if api.engine.entityExists(tonumber(line)) then
+        local colour = api.engine.getComponent(line, api.type.ComponentType.COLOR)
+        if (colour and  colour.color) then
+            return getColourString(colour.color.x, colour.color.y, colour.color.z)
+        else
+            return "default"
+        end
     else
         return "default"
     end
