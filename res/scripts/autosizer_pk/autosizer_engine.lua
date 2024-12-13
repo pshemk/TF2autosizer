@@ -1832,6 +1832,12 @@ local function checkTrainsPositions()
                 -- end
                 local departureTime = engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] + engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME] -- - stationDwellTime
                 -- log("engine: train " .. getTrainName(trainId) .. " departure time: " .. departureTime .. " current time: " .. getGameTime() .. " unload timestamp: " .. engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] .. " travel time: " .. engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME] .. " current index: " .. trainCurrentInfo.stopIndex)
+                
+                -- check if the train hasn't been here for more than 2 full round trips - it might be getting stuck due to other trains resetting station arrival times
+                if getGameTime() - trainPrevInfo[asrEnum.trackedTrain.ARRIVAL_TIMESTAMP] > 2 * engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME] then 
+                    log("engine: train " .. getTrainName(trainId) .. " seems to be stuck at a station, starting)")
+                    departureTime = getGameTime()
+                end
                 if departureTime - 0.5 <= getGameTime()  then      
                     if not trainPrevInfo[asrEnum.trackedTrain.GENERATED_CONFIG] or not trainConfigCache[tostring(trainId)] then
                         log("engine: train " .. getTrainName(trainId) .. " preparing vehicle replacement (restart at " .. trainCurrentInfo.timeUntilLoad .. ", trainId: " ..  trainId .. ")")
