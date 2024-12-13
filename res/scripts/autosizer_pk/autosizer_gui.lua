@@ -1948,24 +1948,24 @@ local function  rebuildLinesTable()
 
                 lineColour:setStyleClassList({"asrLineColour-" .. asrGuiHelper.getLineColour(tonumber(lineId))})
                 
-                local lineEditIcon = api.gui.comp.ImageView.new("ui/modify16.tga")
-                local lineEditButton = api.gui.comp.Button.new(lineEditIcon, false)
-                lineEditButton:onClick(function ()
+                -- local lineEditIcon = api.gui.comp.ImageView.new("ui/modify16.tga")
+                -- local lineEditButton = api.gui.comp.Button.new(lineEditIcon, false)
+                -- lineEditButton:onClick(function ()
 
-                    local lineSettingsLayout = api.gui.util.getById("asr.settingsScrollAreaLayout")
-                    asrGuiState.selectedLine = lineId
-                    asrGuiState.lineSettingsTableBuilt = false
-                    asrGuiState.settingsTableInitalising = true
-                    if asrGuiObjects.lineSettingsDropDownList ~= nil then
-                        asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
-                    end
-                    rebuildLineSettingsLayout()
+                --     local lineSettingsLayout = api.gui.util.getById("asr.settingsScrollAreaLayout")
+                --     asrGuiState.selectedLine = lineId
+                --     asrGuiState.lineSettingsTableBuilt = false
+                --     asrGuiState.settingsTableInitalising = true
+                --     if asrGuiObjects.lineSettingsDropDownList ~= nil then
+                --         asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
+                --     end
+                --     rebuildLineSettingsLayout()
 
-                    sendEngineCommand("asrInitLine", { lineId = lineId })
+                --     sendEngineCommand("asrInitLine", { lineId = lineId })
             
-                end)
+                -- end)
 
-                lineEditIcon:setStyleClassList({"asrLineEditButton"})
+                -- lineEditIcon:setStyleClassList({"asrLineEditButton"})
                 lineName:setTooltip(tostring(lineId))
 
                 -- asrHelper.getLineDetails(line.id)
@@ -1973,6 +1973,7 @@ local function  rebuildLinesTable()
             end
             if asrState[asrEnum.LINES] ~= nil then 
                 linesTable:setOrder(asrHelper.getSortOrder(filteredLines, asrEnum.line.NAME))
+                linesTable:select(-1, false)
             end
             -- hack to make sure the scrolling back to the right position happens after the table has been redrawn
             linesScrollArea:invokeLater(function () linesScrollArea:invokeLater(function () linesScrollArea:setScrollOffset(linesScrollOffset) end ) end )
@@ -3720,7 +3721,7 @@ local function buildMainWindow()
             end
 
             sendEngineCommand("asrInitLine", { lineId = asrGuiState.linesRowMap[id + 1] })
-            -- linesTable:select(-1, false)    
+            linesTable:select(-1, false)    
             rebuildLineSettingsLayout()
         end
     end)
