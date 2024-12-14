@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 13,   -- line deletion fix
+      minorVersion = 14,   -- train in depot fix
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",

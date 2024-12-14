@@ -1676,7 +1676,7 @@ local function checkTrainsPositions()
         if api.engine.entityExists(tonumber(trainId)) then 
             local trainCurrentInfo = api.engine.getComponent(tonumber(trainId), api.type.ComponentType.TRANSPORT_VEHICLE)
             -- train is arriving
-            if trainCurrentInfo.timeUntilLoad > 0 then
+            if trainCurrentInfo and trainCurrentInfo.timeUntilLoad > 0 then
                 -- log("engine: train " .. trainId .. " is appraching a station (" .. trainCurrentInfo.timeUntilLoad .. ") " .. " index: " .. trainCurrentInfo.stopIndex )
                 if not trainPrevInfo[asrEnum.trackedTrain.IN_STATION] and not trainPrevInfo[asrEnum.trackedTrain.GENERATED_CONFIG] then -- prepare new config as train pulls into the station
 
@@ -1703,7 +1703,7 @@ local function checkTrainsPositions()
             end
 
             -- train is unloading
-            if trainCurrentInfo.timeUntilLoad ~= trainPrevInfo[asrEnum.trackedTrain.TIME_UNTIL_LOAD] then
+            if trainCurrentInfo and trainCurrentInfo.timeUntilLoad ~= trainPrevInfo[asrEnum.trackedTrain.TIME_UNTIL_LOAD] then
                 -- log("engine: train " .. trainId .. " timeUntilLoad: " .. trainCurrentInfo.timeUntilLoad )
                 if trainCurrentInfo.timeUntilLoad <= 0.25 and trainPrevInfo[asrEnum.trackedTrain.IN_STATION] and not trainPrevInfo[asrEnum.trackedTrain.REPLACED] then
 
@@ -1725,7 +1725,7 @@ local function checkTrainsPositions()
             end
 
             -- train is leaving
-            if trainCurrentInfo.state == api.type.enum.TransportVehicleState.EN_ROUTE and trainPrevInfo[asrEnum.trackedTrain.STATE] == api.type.enum.TransportVehicleState.AT_TERMINAL then
+            if trainCurrentInfo and trainCurrentInfo.state == api.type.enum.TransportVehicleState.EN_ROUTE and trainPrevInfo[asrEnum.trackedTrain.STATE] == api.type.enum.TransportVehicleState.AT_TERMINAL then
                 log("engine: train " .. getTrainName(trainId) .. " is leaving a station " .. " heading to index: " .. trainCurrentInfo.stopIndex )
 
                 if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACE_ON] == "departure" and not trainPrevInfo[asrEnum.trackedTrain.REPLACED]  then 
@@ -1771,15 +1771,17 @@ local function checkTrainsPositions()
             end
 
             -- check if the line is still enabled and store the current state
-            if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.ENABLED] then 
-                if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then 
-                    engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.STATE] = trainCurrentInfo.state
-                    engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TIME_UNTIL_LOAD] = trainCurrentInfo.timeUntilLoad
+            if trainCurrentInfo then 
+                if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.ENABLED] then 
+                    if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then 
+                        engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.STATE] = trainCurrentInfo.state
+                        engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TIME_UNTIL_LOAD] = trainCurrentInfo.timeUntilLoad
+                    end
+                else
+                    -- line not enabled any more - stop tracking
+                    log("engine: train " .. getTrainName(trainId) .. " is no longer tracked (line disabled)")
+                    engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] = nil 
                 end
-            else
-                -- line not enabled any more - stop tracking
-                log("engine: train " .. getTrainName(trainId) .. " is no longer tracked (line disabled)")
-                engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] = nil 
             end
         else
             -- the train most likely got sold, stop tracking
