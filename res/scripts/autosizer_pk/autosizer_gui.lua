@@ -523,6 +523,11 @@ local function rebuildLineSettingsLayout()
         end)
     end
 
+    if not asrState[asrEnum.LINES][tostring(lineId)] then
+        asrGuiState.selectedLine = nil
+        lineId = nil
+    end
+
     if lineId ~= nil and asrState[asrEnum.LINES][tostring(lineId)] ~= nil and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.UPDATE_TIMESTAMP] ~= nil  then
 
         if not asrGuiState.lineSettingsTableBuilt then
@@ -1942,7 +1947,13 @@ local function  rebuildLinesTable()
                     lineStatus:setStyleClassList({"asrLineStatusDisabled"})
                     lineStatus:setTooltip(i18Strings.disabled_for_line)    
                 end
-                local lineName = api.gui.comp.TextView.new(tostring(line[asrEnum.line.NAME]))
+
+                local lineName
+                if line[asrEnum.line.NAME] then 
+                    lineName = api.gui.comp.TextView.new(tostring(line[asrEnum.line.NAME]))
+                else
+                    lineName = api.gui.comp.TextView.new("unknown?")
+                end
                 lineName:setStyleClassList({"asrLineName"})
                 lineName:setId("asr.lineName-" .. lineId)
 

@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 12,   -- line filtering release
+      minorVersion = 13,   -- line deletion fix
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
