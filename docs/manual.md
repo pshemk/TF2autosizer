@@ -52,7 +52,7 @@ On the right hand side there's the Autosizer configuration for the line. In this
 
 Lets now tick the "station state" checkbox, as shown below:
 
-![Line configuration](images/autosizer2.png)
+![Line configuration](images/autosizer2.jpg)
 
 That makes a new panel appear, with a list of cargo information sources. In this case - we want to track the production of the coal mine, so let's select the "Industry" option, which makes a button with `--- Select ---` on it appear. Once we click that button we can see two options: a coal mine and a steel mill. The first icon on the line shows the kind of the industry (supplier, arrow pointing up or consumer, arrow pointing down) and the second - the type of cargo. In this case we want to track the supplier so let's click the mine.
 
@@ -138,7 +138,50 @@ But when the trains pulls into the hub station the line status turns orange, hov
 
 ![Cargo groups](images/cargo_group5.png)
 
-A single train is not enough to carry all the cargo. This can be fixed by simply adding another train onto the line. The mod automatically splits the number of wagons required between all the trains on the line.
+A single train is not enough to carry all the cargo. This can be fixed by simply adding another train onto the line. The mod automatically splits the number of wagons required between all the trains on the line. If you enable the departure scheduler this mod will make sure that the trains are spaced evenly on the line.
+
+## Mod settings
+
+The settings tab provides the ability to adjust some global settings and also can show the performance metrics of the mod. 
+
+![Settings](images/settings.png)
+
+### Minimal train wagon count
+
+This number is used to determine the minimal number of wagons the train should end up with after the adjustment process. This might be for either aesthetic or performance reasons. By default it's set to 1. If you want to use engine-only trains - this slider must be moved to 0.
+
+### Default maximal train length
+
+This number is used in train adjustment calculations to determine how long the train can be. By default it's 160m. Changing the value here adjusts it for all lines that use the 'Global' setting.
+
+### Enable scheduler
+
+This option enables the departures scheduler at each station that's been configured.
+
+### Slow tracking details
+
+This option enables an additional panel in the line settings that shows the current tracking information about the trains.
+
+### Enable timings
+
+Enabling this option turns on performance tracking in the mod. The performance statistics are displayed on the right side. There are two types of functions here:
+
+Real-time functions:
+- `checkTrainsCapacity`
+- `checkTrainsPositions`
+- `refrshLinesCargoAmounts`
+
+Periodic functions
+- `updateSupplyChains`
+
+The 'Total' value shows the amount of time all the real-time functions are taking. The left column shows the average duration of the function execution, the right one - the maximal one (over the last 20 executions).
+
+In addition the table displays the number of trains currently being tracked. More on this in the Performance considerations below.
+
+### Enable debug
+
+Enabling this option turns on extensive debugging into the console log. This might be useful during troubleshooting. This option also enables a number of buttons (in both the settings and line tabs). Generally speaking those buttons either display the state of internal variables, or reset them. Pressing the `!!! Erase state !!!` button results in a "factory-reset" of the mod.
+
 
 ## Additional options
 
@@ -164,6 +207,16 @@ In order to speed up the calculations the mod assumes that each wagon has the sa
 
 Moving the slider permanently adjusts the discovered capacity of the wagons for the calculations at that station.
 
+### Departure scheduler
+
+Enabling the departure scheduler for a station means that the mod will try to time the departures of the trains, so they're evenly spaced on the line. Since the frequency of the line means how often (on average) the trains depart from any given station - that value is used. When the scheduler is enabled - the value gets displayed:
+
+![Departure scheduler](images/departure_scheduler1.png)
+
+In addtion, if display of train tracking information is enabled in settings, the train tracking panel show how long before the train departs:
+
+![Departure scheduler](images/departure_scheduler2.png)
+
 ### Trains with no wagons
 
 It's possible to reduce the number of wagons to zero and end up with an engine-only train, this can be achieved in two ways:
@@ -177,39 +230,6 @@ There are some unintended consequences of doing that:
   
 - if there's only one train on the line, the moment its wagons are gone the supply chains get broken, so the industries stop producing and the cargo starts to disappear from the station. The only way to prevent this is to make sure there's at least one train with wagons left on the line.
 
-## Mod settings
-
-The settings tab provides the ability to adjust some global settings and also can show the performance metrics of the mod. 
-
-![Settings](images/settings.png)
-
-### Minimal train wagon count
-
-This number is used to determine the minimal number of wagons the train should end up with after the adjustment process. This might be for either aesthetic or performance reasons. By default it's set to 1. If you want to use engine-only trains - this slider must be moved to 0.
-
-### Default maximal train length
-
-This number is used in train adjustment calculations to determine how long the train can be. By default it's 160m. Changing the value here adjusts it for all lines that use the 'Global' setting.
-
-### Enable timings
-
-Enabling this option turns on performance tracking in the mod. The performance statistics are displayed on the right side. There are two types of functions here:
-
-Real-time functions:
-- `checkTrainsCapacity`
-- `checkTrainsPositions`
-- `refrshLinesCargoAmounts`
-
-Periodic functions
-- `updateSupplyChains`
-
-The 'Total' value shows the amount of time all the real-time functions are taking. The left column shows the average duration of the function execution, the right one - the maximal one (over the last 20 executions).
-
-In addition the table displays the number of trains currently being tracked. More on this in the Performance considerations below.
-
-### Enable debug
-
-Enabling this option turns on extensive debugging into the console log. This might be useful during troubleshooting. This option also enables a number of buttons (in both the settings and line tabs). Generally speaking those buttons either display the state of internal variables, or reset them. Pressing the `!!! Erase state !!!` button results in a "factory-reset" of the mod.
 
 ## Train adjustment process
 
