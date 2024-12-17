@@ -147,8 +147,9 @@ local asrGuiDimensions = {
     },
     lineSettingsDropDownList = {
         width = 350,
-        height = 120,
+        height = 200,
     },
+    lineSettingsOffset = 10,
     shippingContractsScrollArea = {
         width = 490,
         height = 250,
@@ -476,7 +477,7 @@ local function rebuildLineSettingsLayout()
         lineSettingsTable:setColWidth(0,asrGuiDimensions.lineSettingsTable.columns[1])
         lineSettingsTable:setColWidth(1,asrGuiDimensions.lineSettingsTable.columns[2])
         lineSettingsTable:setGravity(0, 0)
-        lineSettingsScrollAreaLayout:addItem(lineSettingsTable, api.gui.util.Rect.new(0,0,590,500))
+        lineSettingsScrollAreaLayout:addItem(lineSettingsTable, api.gui.util.Rect.new(0,10,590,490))
         asrGuiObjects.lineSettingsTable = lineSettingsTable
     else
         if asrGuiState.lineSettingsTableBuilt == false and asrGuiState.settingsTableInitalising == true  then 
@@ -490,7 +491,7 @@ local function rebuildLineSettingsLayout()
         lineSettingsColourLineTable:setColWidth(0,asrGuiDimensions.lineSettingsScrollArea.width)
         lineSettingsColourLineTable:setGravity(0, 0)
         asrGuiObjects.lineSettingsColourLineTable = lineSettingsColourLineTable
-        lineSettingsScrollAreaLayout:addItem(lineSettingsColourLineTable, api.gui.util.Rect.new(0, 30, asrGuiDimensions.lineSettingsScrollArea.width,10))
+        lineSettingsScrollAreaLayout:addItem(lineSettingsColourLineTable, api.gui.util.Rect.new(0, asrGuiDimensions.lineSettingsOffset, asrGuiDimensions.lineSettingsScrollArea.width,10))
     else
         if asrGuiState.lineSettingsTableBuilt == false then lineSettingsColourLineTable:deleteAll() end
     end
@@ -523,12 +524,12 @@ local function rebuildLineSettingsLayout()
         end)
     end
 
-    if not asrState[asrEnum.LINES][tostring(lineId)] then
+    if not asrState[asrEnum.LINES] or not asrState[asrEnum.LINES][tostring(lineId)] then
         asrGuiState.selectedLine = nil
         lineId = nil
     end
 
-    if lineId ~= nil and asrState[asrEnum.LINES][tostring(lineId)] ~= nil and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.UPDATE_TIMESTAMP] ~= nil  then
+    if lineId ~= nil and asrState[asrEnum.LINES] and asrState[asrEnum.LINES][tostring(lineId)] ~= nil and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.UPDATE_TIMESTAMP] ~= nil  then
 
         if not asrGuiState.lineSettingsTableBuilt then
             
@@ -548,8 +549,6 @@ local function rebuildLineSettingsLayout()
             lineNameValue:setId("asr.settingsLineName")
             lineSettingsTable:addRow({lineNameLabel, lineNameValue})
         
-            lineSettingsTable:addRow({api.gui.comp.TextView.new(""), api.gui.comp.TextView.new("")})
-
             local lineText = " "
             for i=1,10 do
                 lineText = lineText .. lineText
@@ -557,149 +556,21 @@ local function rebuildLineSettingsLayout()
             local col0text = api.gui.comp.TextView.new(lineText)
             col0text:setStyleClassList({"asrBackgroundLineColour-" .. asrGuiHelper.getLineColour(tonumber(asrGuiState.selectedLine))})
             lineSettingsColourLineTable:addRow({col0text})
-            lineSettingsScrollAreaLayout:setPosition(lineSettingsScrollAreaLayout:getIndex(lineSettingsColourLineTable),0, 45)
+            lineSettingsScrollAreaLayout:setPosition(lineSettingsScrollAreaLayout:getIndex(lineSettingsColourLineTable),0, 0)
+            lineSettingsColourLineTable:setVisible(true, false)
 
-            local trainLengthTable = api.gui.comp.Table.new(3, 'NONE')
-            trainLengthTable:setGravity(0,0)
-            trainLengthTable:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.lineSettingsTable.columns[2] - 1 , 50))
-            trainLengthTable:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.lineSettingsTable.columns[2] - 1 , 50))
-            trainLengthTable:setId("asr.trainLengthTable-" .. lineId)
-            trainLengthTable:setColWidth(0, asrGuiDimensions.lineSettingsInternalTable.columns[1])
-            trainLengthTable:setColWidth(1, asrGuiDimensions.lineSettingsInternalTable.columns[2])
-            trainLengthTable:setColWidth(2, asrGuiDimensions.lineSettingsInternalTable.columns[3])
-
-
-            -- local trainLengthAutomaticCheckBox = api.gui.comp.CheckBox.new("", "ui/design/components/checkbox_small_invalid@2x.tga", "ui/design/components/checkbox_small_valid@2x.tga")
-            -- trainLengthAutomaticCheckBox:setId("asr.trainLengthAutomatic-" .. lineId)
-            -- local trainLengthAutomaticLabel = api.gui.comp.TextView.new("Automatic")
-
-            local trainLengthGlobalCheckBox = api.gui.comp.CheckBox.new("", "ui/design/components/checkbox_small_invalid@2x.tga", "ui/design/components/checkbox_small_valid@2x.tga")
-            trainLengthGlobalCheckBox:setId("asr.trainLengthGlobal-" .. lineId)
-            local trainLengthGlobalLabel = api.gui.comp.TextView.new(i18Strings.default)
-
-            local trainLengthManualCheckBox = api.gui.comp.CheckBox.new("", "ui/design/components/checkbox_small_invalid@2x.tga", "ui/design/components/checkbox_small_valid@2x.tga")
-            trainLengthManualCheckBox:setId("asr.trainLengthManual-" .. lineId)
-            local trainLengthManualLabel = api.gui.comp.TextView.new(i18Strings.manual)
-
-            local trainLengthManualLayout = api.gui.layout.BoxLayout.new("HORIZONTAL");
-            local trainLengthManualWrapper = api.gui.comp.Component.new("asr.trainLengthWrapper-" .. lineId)
-            trainLengthManualWrapper:setLayout(trainLengthManualLayout)
-
-            local trainLengthManualTextInput = api.gui.comp.TextInputField.new("000")
-            trainLengthManualTextInput:setId("asr.trainLengthManualInput-" .. lineId)
-            trainLengthManualTextInput:setMaxLength(3)
-            if asrState[asrEnum.LINES][tostring(lineId)] and 
-                asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] and 
-                asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.line.SETTINGS] and
-                asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH] then
-                trainLengthManualTextInput:setText(tostring(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH]), false) 
-            end
-
-            trainLengthManualTextInput:onFocusChange(function (hasFocus) 
-                if not hasFocus then
-                    local amountValue = trainLengthManualTextInput:getText()
-                    local amountValueNum = tonumber(amountValue)
-                    if amountValueNum == nil then
-                        trainLengthManualTextInput:setText("", false)
-                        return
-                    end
-                    if amountValueNum ~= math.floor(amountValueNum) then
-                        trainLengthManualTextInput:setText("", false)
-                        return
-                    end
-                    -- send the value to the engine
-                    sendEngineCommand("asrLineSettings", { lineId = lineId, property = asrEnum.lineSettngs.TRAIN_LENGTH, value = amountValueNum})
-                end
-            end)
-            trainLengthManualTextInput:onEnter(function () 
-                local amountValue = trainLengthManualTextInput:getText()
-                local amountValueNum = tonumber(amountValue)
-                if amountValueNum == nil then
-                    trainLengthManualTextInput:setText("", false)
-                    return
-                end
-                if amountValueNum ~= math.floor(amountValueNum) then
-                    trainLengthManualTextInput:setText("", false)
-                    return
-                end
-                -- send the value to the engine
-                sendEngineCommand("asrLineSettings", { lineId = lineId, property = asrEnum.lineSettngs.TRAIN_LENGTH, value = amountValueNum})
-            end)
-            trainLengthManualTextInput:onCancel(function () 
-                if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH] then
-                    trainLengthManualTextInput:setText(tostring(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH]), false) 
-                end    
-            end)
-            -- trainLengthTable:addRow({trainLengthAutomaticCheckBox, trainLengthAutomaticLabel, api.gui.comp.TextView.new("000m")})
-            local globalTrainLength = asrState[asrEnum.SETTINGS][asrEnum.settings.TRAIN_LENGTH]
-            local trainLengthGlobalValue = api.gui.comp.TextView.new("")
-            trainLengthGlobalValue:setId("asr.trainLengthGLobalValue-" .. lineId)
-            trainLengthGlobalValue:setText(tostring(globalTrainLength) .. " m")
-
-            local trainLengthManualUnit = api.gui.comp.TextView.new("m")
-            trainLengthManualUnit:setId("asr.trainLengthManualUnit-" .. lineId)
-
-            trainLengthManualLayout:addItem(trainLengthManualTextInput)
-            trainLengthManualLayout:addItem(trainLengthManualUnit)
-            trainLengthTable:addRow({trainLengthGlobalCheckBox, trainLengthGlobalLabel, trainLengthGlobalValue})
-            trainLengthTable:addRow({trainLengthManualCheckBox, trainLengthManualLabel, trainLengthManualWrapper })
-
-            -- trainLengthAutomaticCheckBox:onToggle(function (checked) 
-            --     setToggle("trainLength", "Automatic", lineId, checked)
-            --     asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
-            -- end)
-            trainLengthGlobalCheckBox:onToggle(function (checked) 
-                setToggle("trainLength", "Global", lineId, checked)
-                sendEngineCommand("asrLineSettings", { lineId = lineId, property = asrEnum.lineSettngs.TRAIN_LENGTH_SELECTOR, value = "global"})
-                asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
-                if checked then
-                    trainLengthManualUnit:setVisible(false, false)
-                else
-                    trainLengthManualUnit:setVisible(true, false)
-                end
-
-            end)
-            trainLengthManualCheckBox:onToggle(function (checked)
-                setToggle("trainLength", "Manual", lineId, checked)
-                sendEngineCommand("asrLineSettings", { lineId = lineId, property = asrEnum.lineSettngs.TRAIN_LENGTH_SELECTOR, value = "manual"})
-                asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
-                if checked then
-                    trainLengthManualUnit:setVisible(true, false)
-                else
-                    trainLengthManualUnit:setVisible(false, false)
-                end
-            end)
-
-            if not asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] or (asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH_SELECTOR] ~= "manual")  then  -- catch all other cases
-                trainLengthGlobalCheckBox:setSelected(true, false)
-                trainLengthManualTextInput:setEnabled(false, false)
-                trainLengthManualTextInput:setVisible(false, false)
-                trainLengthManualUnit:setVisible(false, false)
-            end
-            if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH_SELECTOR] == "manual"  then
-                trainLengthManualCheckBox:setSelected(true, false)
-                trainLengthManualTextInput:setEnabled(true, false)
-                trainLengthManualTextInput:setVisible(true, false)
-                trainLengthManualUnit:setVisible(true, false)
-            end
-            if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH]  then
-                trainLengthManualTextInput:setText(tostring(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH]), false)
-            end
-            local trainLegthLabel = api.gui.comp.TextView.new(i18Strings.train_length)
-            trainLegthLabel:setGravity(0,0)
-            lineSettingsTable:addRow({trainLegthLabel, trainLengthTable})
-
-
-            lineSettingsTable:addRow({api.gui.comp.TextView.new(""), api.gui.comp.TextView.new("")})
+            -- lineSettingsTable:addRow({api.gui.comp.TextView.new(""), api.gui.comp.TextView.new("")})
             lineSettingsTable:addRow({api.gui.comp.TextView.new(i18Strings.stations), api.gui.comp.TextView.new("")})
 
             -- loop through the stations and generate the setup
             if asrState[asrEnum.LINES][tostring(lineId)] ~= nil and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS] ~= nil then 
                 for stopSequence, station in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS]) do
                     local stationName = ""
-                    if station[asrEnum.station.STATION_GROUP_ID] ~=nil and api.engine.entityExists(station[asrEnum.station.STATION_GROUP_ID]) then
-                        local stationNameAPI = api.engine.getComponent(tonumber(station[asrEnum.station.STATION_GROUP_ID]), api.type.ComponentType.NAME)
-                        stationName = stationNameAPI.name
+                    if station[asrEnum.station.STATION_GROUP_ID] ~= nil then
+                        if api.engine.entityExists(tonumber(station[asrEnum.station.STATION_GROUP_ID])) then 
+                            local stationNameAPI = api.engine.getComponent(tonumber(station[asrEnum.station.STATION_GROUP_ID]), api.type.ComponentType.NAME)
+                            stationName = stationNameAPI.name
+                        end
                     else
                         log("gui: getComponent can't find station name")
                     end
@@ -800,7 +671,7 @@ local function rebuildLineSettingsLayout()
                         else
 
                             local settingsTabletHeight = getDistance("lineSettingsTable", lineSettingsCurrentRowCount - 1)
-                            lineSettingsScrollAreaLayout:setPosition(lineSettingsScrollAreaLayout:getIndex(lineSettingsDropDownList), lineSettingsTable:getColWidth(0) + amountSelectionTable:getColWidth(0) + amountSelectionTable:getColWidth(1), settingsTabletHeight + amountSelectionTable:getRowHeight(0))
+                            lineSettingsScrollAreaLayout:setPosition(lineSettingsScrollAreaLayout:getIndex(lineSettingsDropDownList), lineSettingsTable:getColWidth(0) + amountSelectionTable:getColWidth(0) + amountSelectionTable:getColWidth(1), asrGuiDimensions.lineSettingsOffset + settingsTabletHeight + amountSelectionTable:getRowHeight(0))
                             local stationIndustries = {}
                             if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.INDUSTRIES] ~= nil then 
                                 for industryId, industry in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.INDUSTRIES]) do
@@ -912,7 +783,7 @@ local function rebuildLineSettingsLayout()
                         else
 
                             local settingsTabletHeight = getDistance("lineSettingsTable", lineSettingsCurrentRowCount - 1)
-                            lineSettingsScrollAreaLayout:setPosition(lineSettingsScrollAreaLayout:getIndex(lineSettingsDropDownList), lineSettingsTable:getColWidth(0) + amountSelectionTable:getColWidth(0) + amountSelectionTable:getColWidth(1), settingsTabletHeight + amountSelectionTable:getRowHeight(0) + amountSelectionTable:getRowHeight(1))
+                            lineSettingsScrollAreaLayout:setPosition(lineSettingsScrollAreaLayout:getIndex(lineSettingsDropDownList), lineSettingsTable:getColWidth(0) + amountSelectionTable:getColWidth(0) + amountSelectionTable:getColWidth(1), asrGuiDimensions.lineSettingsOffset + settingsTabletHeight + amountSelectionTable:getRowHeight(0) + amountSelectionTable:getRowHeight(1))
                             local shippingContracts = {}
 
                             if asrState[asrEnum.SHIPPING_CONTRACTS] then
@@ -988,7 +859,7 @@ local function rebuildLineSettingsLayout()
                         else
 
                             local settingsTabletHeight = getDistance("lineSettingsTable", lineSettingsCurrentRowCount - 1)
-                            lineSettingsScrollAreaLayout:setPosition(lineSettingsScrollAreaLayout:getIndex(lineSettingsDropDownList), lineSettingsTable:getColWidth(0) + amountSelectionTable:getColWidth(0) + amountSelectionTable:getColWidth(1), settingsTabletHeight + amountSelectionTable:getRowHeight(0) + amountSelectionTable:getRowHeight(1) + amountSelectionTable:getRowHeight(2))
+                            lineSettingsScrollAreaLayout:setPosition(lineSettingsScrollAreaLayout:getIndex(lineSettingsDropDownList), lineSettingsTable:getColWidth(0) + amountSelectionTable:getColWidth(0) + amountSelectionTable:getColWidth(1), asrGuiDimensions.lineSettingsOffset + settingsTabletHeight + amountSelectionTable:getRowHeight(0) + amountSelectionTable:getRowHeight(1) + amountSelectionTable:getRowHeight(2))
 
                             local cargoGroups = {}
 
@@ -1367,6 +1238,135 @@ local function rebuildLineSettingsLayout()
                     lineSettingsTable:addRow({currentAmountWrapper, amountSelectionTable})
                 end
 
+                local trainLengthTable = api.gui.comp.Table.new(3, 'NONE')
+                trainLengthTable:setGravity(0,0)
+                trainLengthTable:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.lineSettingsTable.columns[2] - 1 , 50))
+                trainLengthTable:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.lineSettingsTable.columns[2] - 1 , 50))
+                trainLengthTable:setId("asr.trainLengthTable-" .. lineId)
+                trainLengthTable:setColWidth(0, asrGuiDimensions.lineSettingsInternalTable.columns[1])
+                trainLengthTable:setColWidth(1, asrGuiDimensions.lineSettingsInternalTable.columns[2])
+                trainLengthTable:setColWidth(2, asrGuiDimensions.lineSettingsInternalTable.columns[3])
+    
+    
+                -- local trainLengthAutomaticCheckBox = api.gui.comp.CheckBox.new("", "ui/design/components/checkbox_small_invalid@2x.tga", "ui/design/components/checkbox_small_valid@2x.tga")
+                -- trainLengthAutomaticCheckBox:setId("asr.trainLengthAutomatic-" .. lineId)
+                -- local trainLengthAutomaticLabel = api.gui.comp.TextView.new("Automatic")
+    
+                local trainLengthGlobalCheckBox = api.gui.comp.CheckBox.new("", "ui/design/components/checkbox_small_invalid@2x.tga", "ui/design/components/checkbox_small_valid@2x.tga")
+                trainLengthGlobalCheckBox:setId("asr.trainLengthGlobal-" .. lineId)
+                local trainLengthGlobalLabel = api.gui.comp.TextView.new(i18Strings.default)
+    
+                local trainLengthManualCheckBox = api.gui.comp.CheckBox.new("", "ui/design/components/checkbox_small_invalid@2x.tga", "ui/design/components/checkbox_small_valid@2x.tga")
+                trainLengthManualCheckBox:setId("asr.trainLengthManual-" .. lineId)
+                local trainLengthManualLabel = api.gui.comp.TextView.new(i18Strings.manual)
+    
+                local trainLengthManualLayout = api.gui.layout.BoxLayout.new("HORIZONTAL");
+                local trainLengthManualWrapper = api.gui.comp.Component.new("asr.trainLengthWrapper-" .. lineId)
+                trainLengthManualWrapper:setLayout(trainLengthManualLayout)
+    
+                local trainLengthManualTextInput = api.gui.comp.TextInputField.new("000")
+                trainLengthManualTextInput:setId("asr.trainLengthManualInput-" .. lineId)
+                trainLengthManualTextInput:setMaxLength(3)
+                if asrState[asrEnum.LINES][tostring(lineId)] and 
+                    asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] and 
+                    asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.line.SETTINGS] and
+                    asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH] then
+                    trainLengthManualTextInput:setText(tostring(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH]), false) 
+                end
+    
+                trainLengthManualTextInput:onFocusChange(function (hasFocus) 
+                    if not hasFocus then
+                        local amountValue = trainLengthManualTextInput:getText()
+                        local amountValueNum = tonumber(amountValue)
+                        if amountValueNum == nil then
+                            trainLengthManualTextInput:setText("", false)
+                            return
+                        end
+                        if amountValueNum ~= math.floor(amountValueNum) then
+                            trainLengthManualTextInput:setText("", false)
+                            return
+                        end
+                        -- send the value to the engine
+                        sendEngineCommand("asrLineSettings", { lineId = lineId, property = asrEnum.lineSettngs.TRAIN_LENGTH, value = amountValueNum})
+                    end
+                end)
+                trainLengthManualTextInput:onEnter(function () 
+                    local amountValue = trainLengthManualTextInput:getText()
+                    local amountValueNum = tonumber(amountValue)
+                    if amountValueNum == nil then
+                        trainLengthManualTextInput:setText("", false)
+                        return
+                    end
+                    if amountValueNum ~= math.floor(amountValueNum) then
+                        trainLengthManualTextInput:setText("", false)
+                        return
+                    end
+                    -- send the value to the engine
+                    sendEngineCommand("asrLineSettings", { lineId = lineId, property = asrEnum.lineSettngs.TRAIN_LENGTH, value = amountValueNum})
+                end)
+                trainLengthManualTextInput:onCancel(function () 
+                    if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH] then
+                        trainLengthManualTextInput:setText(tostring(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH]), false) 
+                    end    
+                end)
+                -- trainLengthTable:addRow({trainLengthAutomaticCheckBox, trainLengthAutomaticLabel, api.gui.comp.TextView.new("000m")})
+                local globalTrainLength = asrState[asrEnum.SETTINGS][asrEnum.settings.TRAIN_LENGTH]
+                local trainLengthGlobalValue = api.gui.comp.TextView.new("")
+                trainLengthGlobalValue:setId("asr.trainLengthGLobalValue-" .. lineId)
+                trainLengthGlobalValue:setText(tostring(globalTrainLength) .. " m")
+    
+                local trainLengthManualUnit = api.gui.comp.TextView.new("m")
+                trainLengthManualUnit:setId("asr.trainLengthManualUnit-" .. lineId)
+    
+                trainLengthManualLayout:addItem(trainLengthManualTextInput)
+                trainLengthManualLayout:addItem(trainLengthManualUnit)
+                trainLengthTable:addRow({trainLengthGlobalCheckBox, trainLengthGlobalLabel, trainLengthGlobalValue})
+                trainLengthTable:addRow({trainLengthManualCheckBox, trainLengthManualLabel, trainLengthManualWrapper })
+    
+                -- trainLengthAutomaticCheckBox:onToggle(function (checked) 
+                --     setToggle("trainLength", "Automatic", lineId, checked)
+                --     asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
+                -- end)
+                trainLengthGlobalCheckBox:onToggle(function (checked) 
+                    setToggle("trainLength", "Global", lineId, checked)
+                    sendEngineCommand("asrLineSettings", { lineId = lineId, property = asrEnum.lineSettngs.TRAIN_LENGTH_SELECTOR, value = "global"})
+                    asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
+                    if checked then
+                        trainLengthManualUnit:setVisible(false, false)
+                    else
+                        trainLengthManualUnit:setVisible(true, false)
+                    end
+    
+                end)
+                trainLengthManualCheckBox:onToggle(function (checked)
+                    setToggle("trainLength", "Manual", lineId, checked)
+                    sendEngineCommand("asrLineSettings", { lineId = lineId, property = asrEnum.lineSettngs.TRAIN_LENGTH_SELECTOR, value = "manual"})
+                    asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
+                    if checked then
+                        trainLengthManualUnit:setVisible(true, false)
+                    else
+                        trainLengthManualUnit:setVisible(false, false)
+                    end
+                end)
+    
+                if not asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] or (asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH_SELECTOR] ~= "manual")  then  -- catch all other cases
+                    trainLengthGlobalCheckBox:setSelected(true, false)
+                    trainLengthManualTextInput:setEnabled(false, false)
+                    trainLengthManualTextInput:setVisible(false, false)
+                    trainLengthManualUnit:setVisible(false, false)
+                end
+                if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH_SELECTOR] == "manual"  then
+                    trainLengthManualCheckBox:setSelected(true, false)
+                    trainLengthManualTextInput:setEnabled(true, false)
+                    trainLengthManualTextInput:setVisible(true, false)
+                    trainLengthManualUnit:setVisible(true, false)
+                end
+                if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH]  then
+                    trainLengthManualTextInput:setText(tostring(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH]), false)
+                end
+                local trainLegthLabel = api.gui.comp.TextView.new(i18Strings.train_length)
+                trainLegthLabel:setGravity(0,0)
+                lineSettingsTable:addRow({trainLegthLabel, trainLengthTable})
 
                 -- wagon list
                 local trainWagonsLabel = api.gui.comp.TextView.new(i18Strings.wagons)
@@ -1414,6 +1414,7 @@ local function rebuildLineSettingsLayout()
     
                 lineSettingsTable:addRow({trainWagonsLabel, trainWagonsWrapper})
 
+    
                 -- train list
                 local trainListTable = api.gui.comp.Table.new(3, 'NONE')
                 trainListTable:setColWidth(0, asrGuiDimensions.lineSettingsTrainsTable.columns[1])
@@ -1540,14 +1541,15 @@ local function rebuildLineSettingsLayout()
                 end
             end
 
-            -- add top colour as a table
-            local lineSettingsColourLine = api.gui.comp.Table.new(1, 'NONE')
-            if asrGuiState.selectedLine ~= nil then 
-                log("gui: adding colour line")
-                local col0text = api.gui.comp.TextView.new("                                                      ")
-                col0text:setStyleClassList({"asrBackgroundLineColour-" .. asrGuiHelper.getLineColour(tonumber(asrGuiState.selectedLine))})
-                lineSettingsColourLine:addRow({col0text})
-            end
+            -- -- add top colour as a table
+            -- local lineSettingsColourLine = api.gui.comp.Table.new(1, 'NONE')
+            -- if asrGuiState.selectedLine ~= nil then 
+            --     log("gui: adding colour line")
+            --     local col0text = api.gui.comp.TextView.new("                                                      ")
+            --     col0text:setStyleClassList({"asrBackgroundLineColour-" .. asrGuiHelper.getLineColour(tonumber(asrGuiState.selectedLine))})
+            --     lineSettingsColourLine:addRow({col0text})
+            -- end
+            
             asrGuiState.lineSettingsTableBuilt = true
         else
             -- only doing a refresh of data
@@ -1564,6 +1566,10 @@ local function rebuildLineSettingsLayout()
                     trainLengthGlobalValue:setText(tostring(asrState[asrEnum.SETTINGS][asrEnum.settings.TRAIN_LENGTH]) .. " m")
                 end
             end
+
+            -- -- move the colour line into position
+            -- lineSettingsScrollAreaLayout:setPosition(lineSettingsScrollAreaLayout:getIndex(lineSettingsColourLineTable),0, lineSettingsTable:getRowHeight(0))
+            -- lineSettingsColourLineTable:setVisible(true, false)
 
             -- refresh wagons
 

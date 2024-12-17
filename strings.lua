@@ -34,6 +34,7 @@ function data()
 This mod allows you to change train length automatically at a station, according to set rules. It aims to simplify line management and maintain sufficient capacity when requirements change. 
 It can track the production or consumption of an industry (or a town) and calculate the required amount of wagons neccessary to carry all the cargo. If the production changes - the train length gets adjusted automatically. 
 In additon to simply tracking industries it can also use groupings, such as "shipping contracts" or "cargo groups" to enable more complex scenarios, such as cargo hubs. The trains can also be configured to pick up cargo currently waiting at the station.
+It can also schedule the trains on the line to maintain even distribution, allowing completly turn off 'full load all/any' and still have fully loaded trains.
 
 The manual is available on [url=https://github.com/pshemk/TF2autosizer/blob/main/docs/manual.md]GitHub[/url]
 
@@ -48,7 +49,7 @@ If you like my mod [url=https://buymeacoffee.com/peteraklnz]buy me a coffee :-) 
             new_shipping_contract = "New shipping contract",
             not_tracked = "Train not being currently tracked",
             pickup_waiting = "Pick up waiting",
-            pickup_wating_tip = "Additional amount of waiting cargo to pick up,\nover the calculated value.",
+            pickup_watitng_tip = "Additional amount of waiting cargo to pick up,\nover the calculated rate.",
             pickup_waiting_backlog_label = "Auto-clear",
             pickup_waiting_backlog_label_tip = "Disables the waiting cargo pick up option\nif there is no more extra cargo to pick up",
             rename_cargo_group = "Rename cargo group",
