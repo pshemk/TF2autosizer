@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 14,   -- train in depot fix
+      minorVersion = 15,   -- departure scheduler
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
