@@ -1899,6 +1899,9 @@ local function  rebuildLinesTable()
         else 
             filteredLines = validLines
         end
+        if asrGuiState.linesFilterStatus then
+            filteredLines = asrHelper.filterTable(filteredLines, asrEnum.line.STATUS, asrGuiState.linesFilterStatus)
+        end
         local firstLineId = asrHelper.getFirstSortedKey(filteredLines, asrEnum.line.NAME)
         if filteredLines then 
             for lineId,line in pairs(filteredLines) do
@@ -2016,6 +2019,9 @@ local function refreshLinesTable()
             filteredLines = asrHelper.filterTable(validLines, asrEnum.line.NAME, asrGuiState.linesFilterString)
         else 
             filteredLines = validLines
+        end
+        if asrGuiState.linesFilterStatus then
+            filteredLines = asrHelper.filterTable(filteredLines, asrEnum.line.STATUS, asrGuiState.linesFilterStatus)
         end
         local firstLineId = asrHelper.getFirstSortedKey(filteredLines, asrEnum.line.NAME)
 
@@ -3702,8 +3708,64 @@ local function buildMainWindow()
     local linesScrollAreaComponent = api.gui.comp.Component.new("asr.linesScrollAreaComponent")
     linesScrollAreaComponent:setLayout(linesScrollAreaLayout)
 
+    local linesScrollHeaderLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
+    local linesScrollHeaderComponent = api.gui.comp.Component.new("asr.linesScrollHeaderComponent")
+
+    linesScrollHeaderComponent:setLayout(linesScrollHeaderLayout)
+
+    -- line status filter buttons
+    local linesScrollFilterStatusAllLabel = api.gui.comp.ImageView.new("ui/construction/categories/all@2x.tga")
+    linesScrollFilterStatusAllLabel:setMaximumSize(api.gui.util.Size.new(12, 12))
+    linesScrollFilterStatusAllLabel:setMinimumSize(api.gui.util.Size.new(12, 12))
+    linesScrollFilterStatusAllLabel:setTooltip("All lines")
+    linesScrollFilterStatusAllLabel:setStyleClassList({"asrLinesStatusFilter"})
+    local linesScrollFilterStatusAllButton = api.gui.comp.Button.new(linesScrollFilterStatusAllLabel, false)
+    linesScrollFilterStatusAllButton:onClick(function () 
+        asrGuiState.linesFilterStatus = nil
+        rebuildLinesTable()
+    end)
+
+
+    local linesScrollFilterStatusOkLabel = api.gui.comp.TextView.new("●")
+    linesScrollFilterStatusOkLabel:setStyleClassList({"asrLineFilterOK"})
+    linesScrollFilterStatusOkLabel:setTooltip("All is well")
+    local linesScrollFilterStatusOkButton = api.gui.comp.Button.new(linesScrollFilterStatusOkLabel, false)
+    linesScrollFilterStatusOkButton:onClick(function () 
+        asrGuiState.linesFilterStatus = "OK"
+        rebuildLinesTable()
+    end)
+
+    local linesScrollFilterStatusLengthWarningLabel = api.gui.comp.TextView.new("●")
+    linesScrollFilterStatusLengthWarningLabel:setStyleClassList({"asrLineFilterWarning"})
+    linesScrollFilterStatusLengthWarningLabel:setTooltip("Train length warning")
+    local linesScrollFilterStatusLengthWarningButton = api.gui.comp.Button.new(linesScrollFilterStatusLengthWarningLabel, false)
+    linesScrollFilterStatusLengthWarningButton:onClick(function () 
+        asrGuiState.linesFilterStatus = "Warning"
+        rebuildLinesTable()
+    end)
+
+    local linesScrollFilterStatusCapacityWarningLabel = api.gui.comp.TextView.new("●")
+    linesScrollFilterStatusCapacityWarningLabel:setStyleClassList({"asrLineFilterOverCapacity"})
+    linesScrollFilterStatusCapacityWarningLabel:setTooltip("Station capacity warning")
+    local linesScrollFilterStatusCapacityWarningButton = api.gui.comp.Button.new(linesScrollFilterStatusCapacityWarningLabel, false)
+    linesScrollFilterStatusCapacityWarningButton:onClick(function () 
+        asrGuiState.linesFilterStatus = "OverCapacity"
+        rebuildLinesTable()
+    end)
+
+    local linesScrollFilterStatusMisconfiguredLabel = api.gui.comp.TextView.new("●")
+    linesScrollFilterStatusMisconfiguredLabel:setStyleClassList({"asrLineFilterMisconfigured"})
+    linesScrollFilterStatusMisconfiguredLabel:setTooltip("Misconfigured lines")
+    local linesScrollFilterStatusMisconfiguredButton = api.gui.comp.Button.new(linesScrollFilterStatusMisconfiguredLabel, false)
+    linesScrollFilterStatusMisconfiguredButton:onClick(function () 
+        asrGuiState.linesFilterStatus = "Misconfigured"
+        rebuildLinesTable()
+    end)
+
+
     local linesScrollFilterTextInput = api.gui.comp.TextInputField.new(i18Strings.search_for_line)
     linesScrollFilterTextInput:setGravity(1,1)
+    linesScrollFilterTextInput:setStyleClassList({"asrScrollFilterTextInput"})
     linesScrollFilterTextInput:setMaxLength(22)
     linesScrollFilterTextInput:setMinimumSize(api.gui.util.Size.new(180, 18))
     linesScrollFilterTextInput:setMaximumSize(api.gui.util.Size.new(180, 18))
@@ -3711,6 +3773,13 @@ local function buildMainWindow()
         asrGuiState.linesFilterString = string
         rebuildLinesTable()
     end)
+
+    linesScrollHeaderLayout:addItem(linesScrollFilterStatusAllButton)
+    linesScrollHeaderLayout:addItem(linesScrollFilterStatusOkButton)
+    linesScrollHeaderLayout:addItem(linesScrollFilterStatusLengthWarningButton)
+    linesScrollHeaderLayout:addItem(linesScrollFilterStatusCapacityWarningButton)
+    linesScrollHeaderLayout:addItem(linesScrollFilterStatusMisconfiguredButton)
+    linesScrollHeaderLayout:addItem(linesScrollFilterTextInput)
 
     local linesTable = api.gui.comp.Table.new(4, 'SINGLE')
     linesTable:setColWidth(0,25)
@@ -3750,7 +3819,7 @@ local function buildMainWindow()
     linesScrollAreaLayout:addItem(linesTable)
     linesScrollArea:setContent(linesScrollAreaComponent)
 
-    linesScrollLayout:addItem(linesScrollFilterTextInput)
+    linesScrollLayout:addItem(linesScrollHeaderComponent)
     linesScrollLayout:addItem(linesScrollArea)
 
     linesTabLayout:addItem(linesScrollWrapper)

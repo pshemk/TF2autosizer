@@ -164,7 +164,11 @@ end
 local function enableLine(lineId)
     -- log("trying to enable line " .. lineId)
 
-    if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "Configured"  or engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "OK" then 
+    if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "Configured"  or 
+        engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "OK" or
+        engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "OverCapacity" or 
+        engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "Warning" then 
+
         engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ENABLED] = true
         engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "OK"
         engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = "All is well"

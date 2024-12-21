@@ -33,6 +33,13 @@ function data()
     padding = {0, 3, 0 ,3},
   })
 
+  a("!asrLineFilterOK", {
+    color = {0.45098039, 0.84313725, 0.29411765, 1},
+    fontSize = 27,
+    padding = {-5, 0, 0 , 0},
+    margin = {0, 0, 0, 0},
+  })
+
   a("!asrLineStatusError", {
     color = {0.89411765, 0.03137255, 0.03921569, 1},
     fontSize = 27,
@@ -45,10 +52,24 @@ function data()
     padding = {0, 3, 0 ,3},
   })
 
+  a("!asrLineFilterWarning", {
+    color = {1, 0.5, 0, 1},
+    fontSize = 27,
+    padding = {-5, 0, 0 , 0},
+    margin = {0, 0, 0, 0},
+  })
+
   a("!asrLineStatusOverCapacity", {
     color = {1, 1, 0, 1},
     fontSize = 27,
     padding = {0, 3, 0 ,3},
+  })
+
+  a("!asrLineFilterOverCapacity", {
+    color = {1, 1, 0, 1},
+    fontSize = 27,
+    padding = {-5, 0, 0, 0},
+    margin = {0, 0, 0, 0},
   })
 
 
@@ -64,6 +85,14 @@ function data()
     fontSize = 27,
     padding = {0, 3, 0 ,3},
   })
+
+  a("!asrLineFilterMisconfigured", {
+    color = {1, 1, 1, 1},
+    fontSize = 27,
+    padding = {-5, 0, 0, 0},
+    margin = {0, 0, 0, 0},
+  })
+
 
   a("!asrLineStatusConfigured", {
     color = {0.14117647, 0.40784314, 0.82352941, 1},
@@ -104,6 +133,14 @@ function data()
 
   a("!asrCargoButton", {
     margin = {3, 0, 3 , 20}
+  })
+
+  a("!asrLinesStatusFilter", {
+    margin = {3, 3, 3 , 20}
+  })
+
+  a("!asrScrollFilterTextInput", {
+    margin = {0, 0 ,0 , 155}
   })
 
   a("!asrDropList", {
