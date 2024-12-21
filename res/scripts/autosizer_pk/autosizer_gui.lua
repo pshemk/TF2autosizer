@@ -28,6 +28,7 @@ local asrGuiState = {
     shippingContractsFilterString = "",
     cargoGroupsFilterString = "",
     linesSelectorHover = -1,
+    showStatusWindow = false,
 }
 
 -- state and gui objects
@@ -93,6 +94,7 @@ local i18Strings =  {
     schedule_departures_tip_off = _("schedule_departures_tip_off"),
     schedule_departures_tip_on = _("schedule_departures_tip_on"),
     shipping_contract = _("shipping_contract"),
+    show_status_window = _("show_status_window"),
     show_tracking_details = _("show_tracking_details"),
     stations = _("stations"),
     status_configured = _("status_configured"),
@@ -3924,6 +3926,34 @@ local function buildMainWindow()
     end)    
     settingsTable:addRow({showTrackingDetailsLabel, showTrackingDetailsCheckBox,api.gui.comp.TextView.new("")})
 
+    local showStatusWindowLabel = api.gui.comp.TextView.new(i18Strings.show_status_window)
+    local showStatusWindowCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
+    showStatusWindowCheckBox:setId("asr.showStatusWindow")
+    if asrState[asrEnum.SETTINGS] and asrState[asrEnum.SETTINGS][asrEnum.settings.STATUS_WINDOW] then
+        showStatusWindowCheckBox:setSelected(true, false)
+        asrGuiState.showStatusWindow = true
+    else
+        showStatusWindowCheckBox:setSelected(false, false)
+        asrGuiState.showStatusWindow = false
+    end
+    showStatusWindowCheckBox:setStyleClassList({"asrCheckbox"})
+    showStatusWindowCheckBox:onToggle(function (checked)
+        if checked then
+            sendEngineCommand("asrSettings", { property = asrEnum.settings.STATUS_WINDOW, value = true })
+            if asrGuiObjects.statusWindow then
+                asrGuiObjects.statusWindow:setVisible(true, false)
+                asrGuiState.showStatusWindow = true
+            end
+        else
+            sendEngineCommand("asrSettings", { property = asrEnum.settings.STATUS_WINDOW, value = false })
+            if asrGuiObjects.statusWindow then
+                asrGuiObjects.statusWindow:setVisible(false, false)
+                asrGuiState.showStatusWindow = false
+            end
+        end
+    end)    
+    settingsTable:addRow({showStatusWindowLabel, showStatusWindowCheckBox,api.gui.comp.TextView.new("")})
+
 
     local enableTimingsLabel = api.gui.comp.TextView.new(i18Strings.enable_timings)
     local enableTimingsCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )
@@ -4108,6 +4138,103 @@ local function buildMainWindow()
 
 end
 
+local function buildStatusWindow()
+
+    local statusTable = api.gui.comp.Table.new(2, 'NONE')
+
+    local statusCounters = {}
+    local enabledCounter = 0
+
+    if asrState[asrEnum.LINES] then
+        for _, lineDetails in pairs(asrState[asrEnum.LINES]) do
+            if lineDetails[asrEnum.line.ENABLED] then
+                enabledCounter = enabledCounter + 1
+                if lineDetails[asrEnum.line.STATUS] then
+                    if not statusCounters[lineDetails[asrEnum.line.STATUS]] then
+                        statusCounters[lineDetails[asrEnum.line.STATUS]] = 1
+                    else
+                        statusCounters[lineDetails[asrEnum.line.STATUS]] = statusCounters[lineDetails[asrEnum.line.STATUS]] + 1
+                    end
+                end
+            end
+        end
+    end
+
+    local enabledIcon = api.gui.comp.ImageView.new("ui/checkbox1.tga")
+    enabledIcon:setStyleClassList({"asrGenericCheckbox"})
+    enabledIcon:setTooltip("Eanbled lines")
+    local enabledValue = api.gui.comp.TextView.new(tostring(enabledCounter))
+    enabledValue:setId("asr.statusEnabledValue")
+    statusTable:addRow({enabledIcon, enabledValue })
+
+    local statusOkIcon = api.gui.comp.TextView.new("●")
+    statusOkIcon:setStyleClassList({"asrLineStatusOK"})
+    statusOkIcon:setTooltip("All is well")
+    local statusOkValue = api.gui.comp.TextView.new(tostring(statusCounters["OK"] and statusCounters["OK"] or 0 ))
+    statusOkValue:setId("asr.statusOkValue")
+    statusTable:addRow({statusOkIcon, statusOkValue })
+
+    local statusLengthWarningIcon = api.gui.comp.TextView.new("●")
+    statusLengthWarningIcon:setStyleClassList({"asrLineStatusWarning"})
+    statusLengthWarningIcon:setTooltip("Length warning")
+    local statusLengthWarningValue = api.gui.comp.TextView.new(tostring(statusCounters["Warning"] and statusCounters["Warning"] or 0 ))
+    statusLengthWarningValue:setId("asr.statusLengthWarningValue")
+    statusTable:addRow({statusLengthWarningIcon, statusLengthWarningValue })
+
+    local statusCapacityWarningIcon = api.gui.comp.TextView.new("●")
+    statusCapacityWarningIcon:setStyleClassList({"asrLineStatusOverCapacity"})
+    statusCapacityWarningIcon:setTooltip("Over capacity warning")
+    local statusCapacityWarningValue = api.gui.comp.TextView.new(tostring(statusCounters["OverCapacity"] and statusCounters["OverCapacity"] or 0 ))
+    statusCapacityWarningValue:setId("asr.statusCapacityWarningValue")
+    statusTable:addRow({statusCapacityWarningIcon, statusCapacityWarningValue })
+
+    local window = api.gui.comp.Window.new("Status", statusTable)
+
+    return window
+
+end
+
+local function updateStatusWindow()
+   
+    local statusCounters = {}
+    local enabledCounter = 0
+
+    if asrState[asrEnum.LINES] then
+        for _, lineDetails in pairs(asrState[asrEnum.LINES]) do
+            if lineDetails[asrEnum.line.ENABLED] then
+                enabledCounter = enabledCounter + 1
+                if lineDetails[asrEnum.line.STATUS] then
+                    if not statusCounters[lineDetails[asrEnum.line.STATUS]] then
+                        statusCounters[lineDetails[asrEnum.line.STATUS]] = 1
+                    else
+                        statusCounters[lineDetails[asrEnum.line.STATUS]] = statusCounters[lineDetails[asrEnum.line.STATUS]] + 1
+                    end
+                end
+            end
+        end
+    end
+
+    local enabledValue = api.gui.util.getById("asr.statusEnabledValue")
+    local statusOkValue = api.gui.util.getById("asr.statusOkValue")
+    local statusLengthWarningValue = api.gui.util.getById("asr.statusLengthWarningValue")
+    local statusCapacityWarningValue = api.gui.util.getById("asr.statusCapacityWarningValue")
+
+    if enabledValue then
+        enabledValue:setText(tostring(enabledCounter))
+    end
+
+    if statusOkValue then
+        statusOkValue:setText(tostring(statusCounters["OK"] and statusCounters["OK"] or 0 ))
+    end
+
+    if statusLengthWarningValue then
+        statusLengthWarningValue:setText(tostring(statusCounters["Warning"] and statusCounters["Warning"] or 0 ))
+    end
+    
+    if statusCapacityWarningValue then
+        statusCapacityWarningValue:setText(tostring(statusCounters["OverCapacity"] and statusCounters["OverCapacity"] or 0 ))
+    end    
+end
 local function guiInit()
 
     log("gui: in init")
@@ -4131,6 +4258,11 @@ local function guiInit()
     -- gameInfoLayout:addItem(button)
 
     local linesWindow = buildMainWindow()
+    local statusWindow = buildStatusWindow()
+
+    asrGuiObjects.statusWindow = statusWindow
+
+    statusWindow:setVisible(false, false)
 
     linesWindow:setVisible(false,false)
     linesWindow:onClose(function ()
@@ -4181,6 +4313,14 @@ function asrGui.guiUpdate()
         asrGuiState.refreshCargoGroupsLayout = true
     end
 
+    if  asrGuiObjects.statusWindow then
+        if asrGuiState.showStatusWindow then
+            asrGuiObjects.statusWindow:setVisible(true, false)
+            updateStatusWindow()
+        else
+            asrGuiObjects.statusWindow:setVisible(false, false)
+        end
+    end
     
     if asrState[asrEnum.STATUS] and asrState[asrEnum.STATUS][asrEnum.status.LINES_VERSION] ~= asrLastLinesVersion then
         asrLastLinesVersion = asrState[asrEnum.STATUS][asrEnum.status.LINES_VERSION]

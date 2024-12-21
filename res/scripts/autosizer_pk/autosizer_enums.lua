@@ -72,6 +72,7 @@ asrEnum.station.STOP_DURATION                   = 19
 asrEnum.station.SCHEDULER_ENABLED               = 20
 asrEnum.station.UNLOAD_TIMESTAMP                = 21
 asrEnum.station.WAITING_CARGO_BACKLOG_ONLY      = 22
+asrEnum.station.CAPACITY_WARNING                = 23
 
 -- LINE VEHICLES
 asrEnum.vehicle                                 = {}
@@ -148,6 +149,7 @@ asrEnum.settings.ENABLE_TRAIN_PURCHASE          = 3
 asrEnum.settings.MINIMAL_WAGON_COUNT            = 4
 asrEnum.settings.SCHEDULER_ENABLED              = 5
 asrEnum.settings.TRAIN_DETAILS_ENABLED          = 6
+asrEnum.settings.STATUS_WINDOW                  = 7
 
 -- TRACKED TRAINS
 asrEnum.trackedTrain                            = {}

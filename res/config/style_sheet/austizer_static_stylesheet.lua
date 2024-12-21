@@ -16,6 +16,11 @@ function data()
     fontSize = 15,
   })
 
+  a("!asrGenericCheckbox", {
+    padding = {0,3,0,7},
+    fontSize = 15,
+  })
+
   a("!asrLineStatusDefault", {
     color = {0, 0, 0, 1},
     fontSize = 27,
@@ -39,6 +44,13 @@ function data()
     fontSize = 27,
     padding = {0, 3, 0 ,3},
   })
+
+  a("!asrLineStatusOverCapacity", {
+    color = {1, 1, 0, 1},
+    fontSize = 27,
+    padding = {0, 3, 0 ,3},
+  })
+
 
   a("!asrLineStatusIncompatible", {
     color = {0, 0 , 0, 1},

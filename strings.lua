@@ -62,6 +62,7 @@ If you like my mod [url=https://buymeacoffee.com/peteraklnz]buy me a coffee :-) 
             search_for_cargo_group = "Search for cargo group",
             settings = "Settings",
             shipping_contract = "Shipping contract",
+            show_status_window = "Show status window",
             show_tracking_details = "Show tracking details",
             stations = "Stations",
             status_configured = "Configured",
