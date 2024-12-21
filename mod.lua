@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 15,   -- departure scheduler
+      minorVersion = 16,   -- status window and capacity notifications
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
