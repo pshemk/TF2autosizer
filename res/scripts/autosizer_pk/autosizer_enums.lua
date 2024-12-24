@@ -47,6 +47,7 @@ asrEnum.line.LINE_ID                            = 12
 asrEnum.line.ALWAYS_TRACK                       = 13
 -- asrEnum.line.TRAIN_COUNT                        = 14
 asrEnum.line.TRAIN_LIST                         = 15
+asrEnum.line.CARGO_WAGON_MAP                    = 16
 
 -- LINE STATION
 asrEnum.station                                 = {}
@@ -73,6 +74,7 @@ asrEnum.station.SCHEDULER_ENABLED               = 20
 asrEnum.station.UNLOAD_TIMESTAMP                = 21
 asrEnum.station.WAITING_CARGO_BACKLOG_ONLY      = 22
 asrEnum.station.CAPACITY_WARNING                = 23
+asrEnum.station.CARGO_AMOUNTS                   = 24
 
 -- LINE VEHICLES
 asrEnum.vehicle                                 = {}
@@ -130,6 +132,7 @@ asrEnum.cargoGroup.VALID                        = 5
 asrEnum.cargoGroup.VALIDITY_CHECKED             = 6
 asrEnum.cargoGroup.CARGO_AMOUNT                 = 7
 asrEnum.cargoGroup.MANUAL_NAME                  = 8
+asrEnum.cargoGroup.CARGO_AMOUNTS                = 9
 
 -- CARGO GROUP MEMBER
 asrEnum.cargoGroupMember                        = {}
@@ -140,6 +143,10 @@ asrEnum.cargoGroupMember.CARGO_ID               = 4
 asrEnum.cargoGroupMember.SHIPPING_CONTRACT_ID   = 5
 asrEnum.cargoGroupMember.CARGO_GROUP_ID         = 6
 
+-- CARGO WAGON MAP
+asrEnum.cargoWagonMap                           = {}
+asrEnum.cargoWagonMap.GENERIC                   = 1
+asrEnum.cargoWagonMap.SPECIFIC                  = 2 
 
 -- SETTINGS
 asrEnum.settings                                = {}
