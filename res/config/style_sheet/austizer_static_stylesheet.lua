@@ -156,5 +156,18 @@ function data()
   a("!asrIndustryOther", {
     padding = {0, 0, 0 ,3},
   })
+
+  a("!asrShippingContractSearch", {
+    margin = {0, 0, 0 ,85},
+  })
+  a("!asrCargoGroupSearch", {
+    margin = {0, 0, 0 ,115},
+  })
+  a("!asrTableNoSpaces", {
+    margin = {0, 0, 0 ,0},
+    padding = {0, 0, 0 ,0},
+  })
+  
+
   return result
 end

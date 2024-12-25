@@ -132,11 +132,11 @@ local asrGuiDimensions = {
     },
     linesScrollArea = {
         width = 490,
-        height = 725,
+        height = 690,
     },
     lineSettingsScrollArea = {
         width = 690,
-        height = 725,
+        height = 690,
     },
     lineSettingsTable = {
         columns = {100, 550}
@@ -479,6 +479,7 @@ local function rebuildLineSettingsLayout()
         lineSettingsTable:setColWidth(0,asrGuiDimensions.lineSettingsTable.columns[1])
         lineSettingsTable:setColWidth(1,asrGuiDimensions.lineSettingsTable.columns[2])
         lineSettingsTable:setGravity(0, 0)
+        lineSettingsTable:setStyleClassList({"asrTableNoSpaces"})
         lineSettingsScrollAreaLayout:addItem(lineSettingsTable, api.gui.util.Rect.new(0,10,590,490))
         asrGuiObjects.lineSettingsTable = lineSettingsTable
     else
@@ -590,8 +591,9 @@ local function rebuildLineSettingsLayout()
 
                     local amountSelectionTable = api.gui.comp.Table.new(3, 'NONE')
                     amountSelectionTable:setGravity(0,0)
-                    amountSelectionTable:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.lineSettingsTable.columns[2], 150))
-                    amountSelectionTable:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.lineSettingsTable.columns[2], 150))
+                    amountSelectionTable:setStyleClassList({"asrTableNoSpaces"})
+                    -- amountSelectionTable:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.lineSettingsTable.columns[2], 150))
+                    -- amountSelectionTable:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.lineSettingsTable.columns[2], 150))
         
                     -- amountSelectionTable:setMinimumSize(api.gui.util.Size.new(580, 104))
                     -- amountSelectionTable:setMaximumSize(api.gui.util.Size.new(580, 104))
@@ -2025,6 +2027,12 @@ local function refreshLinesTable()
         end
         local firstLineId = asrHelper.getFirstSortedKey(filteredLines, asrEnum.line.NAME)
 
+        if asrHelper.getTableLength(filteredLines) ~= linesTable:getNumRows() then
+            -- some rows might have disapperaed from the filtered list - rebuild the whole list
+            asrGuiState.rebuildLinesTable = true
+            rebuildLinesTable()
+            return
+        end
         if filteredLines then
             for lineId,line in pairs(filteredLines) do
 
@@ -2138,8 +2146,8 @@ local function rebuildShippingContractsLayout()
 
         local shippingContractsScrollHeaderLayout = api.gui.layout.BoxLayout.new("HORIZONTAL");
         local shippingContractsScrollHeaderWrapper = api.gui.comp.Component.new("asr.shippingContractsScrollHeaderWrapper")
-        shippingContractsScrollHeaderWrapper:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.shippingContractsScrollArea.width + 90, 27))
-        shippingContractsScrollHeaderWrapper:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.shippingContractsScrollArea.width + 90, 27))
+        shippingContractsScrollHeaderWrapper:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.shippingContractsScrollArea.width, 30)) -- 90
+        shippingContractsScrollHeaderWrapper:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.shippingContractsScrollArea.width, 30)) -- 90
         shippingContractsScrollHeaderWrapper:setLayout(shippingContractsScrollHeaderLayout)
 
         local shippingContractsScrollArea = api.gui.comp.ScrollArea.new(api.gui.comp.TextView.new('shippingContractsScrollArea'), "asr.shippingContractsScrollArea")
@@ -2164,10 +2172,11 @@ local function rebuildShippingContractsLayout()
         end)
 
         local shippingContractsFilterTextInput = api.gui.comp.TextInputField.new(i18Strings.search_for_shipping_contract)
-        shippingContractsFilterTextInput:setGravity(-1,-1)
+        shippingContractsFilterTextInput:setGravity(0,0)
         shippingContractsFilterTextInput:setMaxLength(22)
         shippingContractsFilterTextInput:setMinimumSize(api.gui.util.Size.new(180, 18))
         shippingContractsFilterTextInput:setMaximumSize(api.gui.util.Size.new(180, 18))
+        shippingContractsFilterTextInput:setStyleClassList({"asrShippingContractSearch"})
         shippingContractsFilterTextInput:onChange(function (string)
             asrGuiState.shippingContractsFilterString = string
             asrGuiState.rebuildShippingContractsTable = true
@@ -2844,8 +2853,8 @@ local function rebuildCargoGroupsLayout()
 
         local cargoGroupsScrollHeaderLayout = api.gui.layout.BoxLayout.new("HORIZONTAL");
         local cargoGroupsScrollHeaderWrapper = api.gui.comp.Component.new("asr.cargoGroupsScrollHeaderWrapper")
-        cargoGroupsScrollHeaderWrapper:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.cargoGroupsScrollArea.width + 200, 27))
-        cargoGroupsScrollHeaderWrapper:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.cargoGroupsScrollArea.width + 200, 27))
+        cargoGroupsScrollHeaderWrapper:setMaximumSize(api.gui.util.Size.new(asrGuiDimensions.cargoGroupsScrollArea.width, 30)) -- 200
+        cargoGroupsScrollHeaderWrapper:setMinimumSize(api.gui.util.Size.new(asrGuiDimensions.cargoGroupsScrollArea.width, 30)) -- 200
         cargoGroupsScrollHeaderWrapper:setLayout(cargoGroupsScrollHeaderLayout)
  
         local cargoGroupsScrollArea = api.gui.comp.ScrollArea.new(api.gui.comp.TextView.new('cargoGroupsScrollArea'), "asr.cargoGroupsScrollArea")
@@ -2870,10 +2879,11 @@ local function rebuildCargoGroupsLayout()
         end)
 
         local cargoGroupsFilterTextInput = api.gui.comp.TextInputField.new(i18Strings.search_for_cargo_group)
-        cargoGroupsFilterTextInput:setGravity(-1,-1)
+        -- cargoGroupsFilterTextInput:setGravity(-1,0)
         cargoGroupsFilterTextInput:setMaxLength(22)
         cargoGroupsFilterTextInput:setMinimumSize(api.gui.util.Size.new(180, 18))
         cargoGroupsFilterTextInput:setMaximumSize(api.gui.util.Size.new(180, 18))
+        cargoGroupsFilterTextInput:setStyleClassList({"asrCargoGroupSearch"})
         cargoGroupsFilterTextInput:onChange(function (string)
             asrGuiState.cargoGroupsFilterString = string
             asrGuiState.rebuildCargoGroupsTable = true
@@ -4258,6 +4268,7 @@ local function buildStatusWindow()
     statusTable:addRow({statusCapacityWarningIcon, statusCapacityWarningValue })
 
     local window = api.gui.comp.Window.new("Status", statusTable)
+    window:setFocusable(false)
 
     return window
 
@@ -4380,6 +4391,7 @@ function asrGui.guiUpdate()
         asrGuiState.refreshLinesTable = true
         asrGuiState.refreshShippingContractsLayout = true
         asrGuiState.refreshCargoGroupsLayout = true
+
     end
 
     if  asrGuiObjects.statusWindow then
