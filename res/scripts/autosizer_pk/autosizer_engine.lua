@@ -1822,7 +1822,7 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
 
         -- check all stations for flags
         local lengthWarning = false
-        local lengthWarningMessage = "Required trains would be longer than allowed at:"
+        local lengthWarningMessage = "Required trains would have been longer than allowed at:"
         for _, stationDetails in pairs(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS]) do
             if stationDetails[asrEnum.station.LENGTH_WARNING] then
                 local stationName = api.engine.getComponent(stationDetails[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME)
@@ -1834,7 +1834,7 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
         end
 
         local capacityWarning = false
-        local capacityWarningMessage = "More cargo than expected waiting at:"
+        local capacityWarningMessage = "More cargo than expected was waiting at:"
         for _, stationDetails in pairs(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS]) do
             if stationDetails[asrEnum.station.CAPACITY_WARNING] then
                 local stationName = api.engine.getComponent(stationDetails[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME)
@@ -2097,7 +2097,7 @@ local function generateTrainConfigForASingleAmount(trainId, lineId, stopIndex)
 
         -- check all stations for flags
         local lengthWarning = false
-        local lengthWarningMessage = "Required trains would be longer than allowed at:"
+        local lengthWarningMessage = "Required trains would have been longer than allowed at:"
         for _, stationDetails in pairs(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS]) do
             if stationDetails[asrEnum.station.LENGTH_WARNING] then
                 local stationName = api.engine.getComponent(stationDetails[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME)
@@ -2109,7 +2109,7 @@ local function generateTrainConfigForASingleAmount(trainId, lineId, stopIndex)
         end
 
         local capacityWarning = false
-        local capacityWarningMessage = "More cargo than expected waiting at:"
+        local capacityWarningMessage = "More cargo than expected was waiting at:"
         for _, stationDetails in pairs(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS]) do
             if stationDetails[asrEnum.station.CAPACITY_WARNING] then
                 local stationName = api.engine.getComponent(stationDetails[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME)
