@@ -1915,6 +1915,37 @@ local function rebuildLineSettingsLayout()
                         currentTotalAmountText:setText(tostring(currentValue))
                     end
 
+                    -- get current amount of cargos
+                    local cargoEntities = api.engine.system.simCargoSystem.getSimCargosForLine(tonumber(lineId))
+                    local waitingCargoCounter = {}
+                    if cargoEntities then
+                        for _, cargoEntityId in pairs(cargoEntities) do
+                            if api.engine.entityExists(cargoEntityId) then
+                                local cargoDetailsAtTerminal = api.engine.getComponent(cargoEntityId, api.type.ComponentType.SIM_ENTITY_AT_TERMINAL)
+                                local cargoDetails = api.engine.getComponent(cargoEntityId, api.type.ComponentType.SIM_CARGO)
+                                if cargoDetailsAtTerminal and cargoDetails then 
+                                    if cargoDetailsAtTerminal.lineStop0 == stopSequence - 1 then 
+                                        if not waitingCargoCounter[tostring(cargoDetails.cargoType + 1)] then waitingCargoCounter[tostring(cargoDetails.cargoType + 1)] = 0 end
+                                        waitingCargoCounter[tostring(cargoDetails.cargoType + 1)] = waitingCargoCounter[tostring(cargoDetails.cargoType + 1)] + 1
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    if station[asrEnum.station.CARGO_AMOUNTS] then
+                        for cargoId in pairs(station[asrEnum.station.CARGO_AMOUNTS]) do
+
+                            local cargoAmount = waitingCargoCounter[tostring(cargoId)]
+                            if not cargoAmount then cargoAmount = 0 end
+                            local cargoAmountText = api.gui.util.getById("asr.cargoAmounWaitingtText-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId .. "-" .. cargoId)
+                            if cargoAmountText then
+                                cargoAmountText:setText(tostring(cargoAmount), false)
+                            end
+                        end
+                    end
+
+
                     if asrState[asrEnum.SETTINGS][asrEnum.settings.SCHEDULER_ENABLED] then 
                         local scheduleDeparturesCheckBox = api.gui.util.getById("asr.scheduleDeparturesCheckbox-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
                         local scheduleDeparturesLabel = api.gui.util.getById("asr.scheduleDeparturesLabel-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
