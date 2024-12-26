@@ -2402,7 +2402,7 @@ local function checkTrainsPositions()
                 -- log("engine: train " .. trainId .. " is appraching a station (" .. trainCurrentInfo.timeUntilLoad .. ") " .. " index: " .. trainCurrentInfo.stopIndex )
                 if not trainPrevInfo[asrEnum.trackedTrain.IN_STATION] and not trainPrevInfo[asrEnum.trackedTrain.GENERATED_CONFIG] then -- prepare new config as train pulls into the station
 
-                    log("engine: train " .. getTrainName(trainId) .. " is arriving at " .. trainCurrentInfo.timeUntilLoad .. ", (trainId: " ..  trainId .. "), current time: " .. getGameTime())
+                    log("engine: train " .. getTrainName(trainId) .. " is arriving at " .. trainCurrentInfo.timeUntilLoad .. ", (trainId: " ..  trainId .. ")")
 
                     if trainPrevInfo[asrEnum.trackedTrain.WAGON_COUNT] and trainPrevInfo[asrEnum.trackedTrain.WAGON_COUNT] > 0 then
                         -- do not generate the config just yet, we'll do it after unloading
@@ -2410,7 +2410,7 @@ local function checkTrainsPositions()
                         engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.ARRIVAL_TIMESTAMP] = getGameTime()
                         engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.STOP_INDEX] = trainCurrentInfo.stopIndex    
                     else
-                        log("engine: train " .. getTrainName(trainId) .. " preparing vehicle replacement (arrival at " .. trainCurrentInfo.timeUntilLoad .. ", trainId: " ..  trainId .. "), current time: " .. getGameTime())
+                        log("engine: train " .. getTrainName(trainId) .. " preparing vehicle replacement (arrival at " .. trainCurrentInfo.timeUntilLoad .. ", trainId: " ..  trainId .. ")")
                         local replacementConfig, stage = generateTrainConfig(trainId, trainCurrentInfo.line, trainCurrentInfo.stopIndex)
 
                         trainConfigCache[tostring(trainId)] = replacementConfig
@@ -2477,7 +2477,7 @@ local function checkTrainsPositions()
                         if departureTime > getGameTime() and not trainPrevInfo[asrEnum.trackedTrain.IS_STOPPED] then
                             local stopCmd = api.cmd.make.setUserStopped(tonumber(trainId), true)
                             api.cmd.sendCommand(stopCmd, function ()
-                                log ("engine: train " .. getTrainName(trainId) .. " is waiting  at " .. trainCurrentInfo.timeUntilLoad .. ", current time: " .. getGameTime() .. " approx departure time:" .. departureTime)
+                                log ("engine: train " .. getTrainName(trainId) .. " is waiting  at " .. trainCurrentInfo.timeUntilLoad)
                                 engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IS_STOPPED] = true
                                 engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.WAIT_START_TIMESTAMP] = getGameTime()
                             end)
@@ -2579,7 +2579,7 @@ local function checkTrainsPositions()
                         local replaceCmd = api.cmd.make.replaceVehicle(tonumber(trainId), trainConfigCache[tostring(trainId)])
                         engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACED] = true
                         api.cmd.sendCommand(replaceCmd, function () 
-                            log ("engine: train " .. getTrainName(trainId) .. " replace sent on departure, heading to stop " .. trainCurrentInfo.stopIndex .. " current time: " .. getGameTime())
+                            log ("engine: train " .. getTrainName(trainId) .. " replace sent on departure, heading to stop " .. trainCurrentInfo.stopIndex)
                             engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACED] = true
                             engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.DELETE_ON_EXIT] = true    
                             engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.STOP_INDEX] = trainCurrentInfo.stopIndex
