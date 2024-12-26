@@ -136,7 +136,7 @@ local asrGuiDimensions = {
     },
     lineSettingsScrollArea = {
         width = 690,
-        height = 690,
+        height = 700,
     },
     lineSettingsTable = {
         columns = {100, 550}
@@ -466,7 +466,7 @@ local function rebuildLineSettingsLayout()
 
     -- log("gui: rebuildLineSettingsLayout")
     local lineSettingsScrollAreaLayout = asrGuiObjects.lineSettingsScrollAreaLayout
-    local lineSettingsTable = asrGuiObjects.lineSettingsTable --  api.gui.util.getById("asr.lineSettingsTable")
+    local lineSettingsTable = asrGuiObjects.lineSettingsTable
     local lineSettingsColourLineTable = asrGuiObjects.lineSettingsColourLineTable
     local lineSettingsDropDownList = asrGuiObjects.lineSettingsDropDownList
 
@@ -579,7 +579,7 @@ local function rebuildLineSettingsLayout()
                     end
 
                     -- used to display the currently selected amount, rest of code at the end of the loop
-                    local currentAmountWrapper = api.gui.comp.Component.new("asr.amountWrapper")
+                    local currentAmountTable = api.gui.comp.Table.new(1, 'SINGLE')
 
                     local stationNameLayout = api.gui.layout.BoxLayout.new("HORIZONTAL");
                     local stationNameWrapper = api.gui.comp.Component.new("asr.stationNameWrapper-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
@@ -608,11 +608,11 @@ local function rebuildLineSettingsLayout()
                     if station[asrEnum.station.ENABLED] == true then
                         stationEnabled:setSelected(true, false)
                         amountSelectionTable:setVisible(true, false)
-                        currentAmountWrapper:setVisible(true, false)
+                        currentAmountTable:setVisible(true, false)
                     else
                         stationEnabled:setSelected(false, false)
                         amountSelectionTable:setVisible(false, false)
-                        currentAmountWrapper:setVisible(false, false)
+                        currentAmountTable:setVisible(false, false)
                     end
                     -- stationEnabled:setStyleClassList({"asrCheckbox"})
                     stationEnabled:onToggle(function (checked)
@@ -624,14 +624,14 @@ local function rebuildLineSettingsLayout()
                             }
                             sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config = stationConfig})
                             amountSelectionTable:setVisible(true, false)
-                            currentAmountWrapper:setVisible(true, false)
+                            currentAmountTable:setVisible(true, false)
                         else
                             log("checkbox for station " .. station[asrEnum.station.STATION_ID] .. " set to false")
                             local stationConfig = {}
                             stationConfig[asrEnum.station.ENABLED] = false
                         sendEngineCommand("asrUpdateStation", { lineId = lineId, stopSequence = stopSequence, stationId = station[asrEnum.station.STATION_ID], config = stationConfig})
                             amountSelectionTable:setVisible(false, false)
-                            currentAmountWrapper:setVisible(false, false)
+                            currentAmountTable:setVisible(false, false)
                         end
                         asrGuiObjects.lineSettingsDropDownList:setVisible(false, false)
 
@@ -1216,30 +1216,113 @@ local function rebuildLineSettingsLayout()
                         end)
                         
                     -- show the current values for the amount selection (if known)
-                    currentAmountWrapper:setId("asr.currentAmountWrapper-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
-                    local currentAmountLayout = api.gui.layout.BoxLayout.new("VERTICAL");
-                    currentAmountWrapper:setGravity(0,0)
-                    currentAmountWrapper:setLayout(currentAmountLayout)
+                    currentAmountTable:setId("asr.currentAmounTable-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                    currentAmountTable:setGravity(0,0)
+                    currentAmountTable:setColWidth(0, 90)
 
-                    local currentTotalAmountLayout = api.gui.layout.BoxLayout.new("HORIZONTAL");
-                    local currentTotalAmountWrapper = api.gui.comp.Component.new("asr.totalAmountWrapper")
+                    -- get current amount of cargos
+                    local cargoEntities = api.engine.system.simCargoSystem.getSimCargosForLine(tonumber(lineId))
+                    local waitingCargoCounter = {}
+                    if cargoEntities then
+                        for _, cargoEntityId in pairs(cargoEntities) do
+                            if api.engine.entityExists(cargoEntityId) then
+                                local cargoDetailsAtTerminal = api.engine.getComponent(cargoEntityId, api.type.ComponentType.SIM_ENTITY_AT_TERMINAL)
+                                local cargoDetails = api.engine.getComponent(cargoEntityId, api.type.ComponentType.SIM_CARGO)
+                                if cargoDetailsAtTerminal and cargoDetails then 
+                                    if cargoDetailsAtTerminal.lineStop0 == stopSequence - 1 then 
+                                        if not waitingCargoCounter[tostring(cargoDetails.cargoType + 1)] then waitingCargoCounter[tostring(cargoDetails.cargoType + 1)] = 0 end
+                                        waitingCargoCounter[tostring(cargoDetails.cargoType + 1)] = waitingCargoCounter[tostring(cargoDetails.cargoType + 1)] + 1
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    currentAmountTable:onHover(function (id) 
+                        if id == 0 then
+
+                            currentAmountTable:deleteRows(1,currentAmountTable:getNumRows())
+                            currentAmountTable:addRow({api.gui.comp.TextView.new("Expected:")})
+                            if station[asrEnum.station.CARGO_AMOUNTS] then
+                                for cargoId, cargoAmount in pairs(station[asrEnum.station.CARGO_AMOUNTS]) do
+                                    local cargoAmountLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
+                                    local cargoAmountWrapper = api.gui.comp.Component.new("asrCargoAmountWrapper")
+                                    cargoAmountWrapper:setLayout(cargoAmountLayout)
+                                    
+                                    local cargoAmountIcon = api.gui.comp.ImageView.new("ui/hud/cargo_" .. string.lower(cargoTypes[tonumber(cargoId)]) .. "@2x.tga")
+                                    cargoAmountIcon:setMaximumSize(api.gui.util.Size.new(15, 15))
+                                    if not cargoAmount then cargoAmount = 0 end
+                                    local cargoAmountText = api.gui.comp.TextView.new(tostring(cargoAmount))
+                                    cargoAmountText:setId("asr.expectedAmountText-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId .. "-" .. cargoId)
+                                    cargoAmountLayout:addItem(cargoAmountIcon)
+                                    cargoAmountLayout:addItem(cargoAmountText)
+                                    currentAmountTable:addRow({cargoAmountWrapper})
+                                end
+                            end
+                        elseif id == -1 then
+
+                            currentAmountTable:deleteRows(1,currentAmountTable:getNumRows())
+                            currentAmountTable:addRow({api.gui.comp.TextView.new("Waiting:")})
+        
+                            if station[asrEnum.station.CARGO_AMOUNTS] then
+                                for cargoId in pairs(station[asrEnum.station.CARGO_AMOUNTS]) do
+                                    local cargoAmountLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
+                                    local cargoAmountWrapper = api.gui.comp.Component.new("asrCargoAmountWrapper")
+                                    cargoAmountWrapper:setLayout(cargoAmountLayout)
+                
+                                    local cargoAmountIcon = api.gui.comp.ImageView.new("ui/hud/cargo_" .. string.lower(cargoTypes[tonumber(cargoId)]) .. "@2x.tga")
+                                    cargoAmountIcon:setMaximumSize(api.gui.util.Size.new(15, 15))
+        
+                                    local cargoAmount = waitingCargoCounter[tostring(cargoId)]
+                                    if not cargoAmount then cargoAmount = 0 end
+                                    local cargoAmountText = api.gui.comp.TextView.new(tostring(cargoAmount))
+                                    cargoAmountText:setId("asr.cargoAmounWaitingtText-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId .. "-" .. cargoId)
+                                    cargoAmountLayout:addItem(cargoAmountIcon)
+                                    cargoAmountLayout:addItem(cargoAmountText)
+                                    currentAmountTable:addRow({cargoAmountWrapper})                
+                                end
+                            end
+                        end
+                        currentAmountTable:select(-1, false)
+                    end)
+
+                    local currentTotalAmountLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
+                    local currentTotalAmountWrapper = api.gui.comp.Component.new("asrTotalAmountWrapper")
+                    -- currentAmountWrapper:setId("asr.currentAmountWrapper-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
                     currentTotalAmountWrapper:setLayout(currentTotalAmountLayout)
 
                     local currentTotalAmountIcon = api.gui.comp.ImageView.new("ui/icons/game-menu/cargo@2x.tga")
-                    currentTotalAmountIcon:setMaximumSize(api.gui.util.Size.new(18, 18))
-                    currentTotalAmountLayout:addItem(currentTotalAmountIcon)
-                    
+                    currentTotalAmountIcon:setMaximumSize(api.gui.util.Size.new(15, 15))
                     local currentValue = station[asrEnum.station.CARGO_AMOUNT]
                     if not currentValue then currentValue = 0 end
-
                     local currentTotalAmountText = api.gui.comp.TextView.new(tostring(currentValue))
                     currentTotalAmountText:setId("asr.currentTotalAmountText-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
-                    currentTotalAmountLayout:addItem(currentTotalAmountText)
 
-                    currentAmountLayout:addItem(currentTotalAmountWrapper)
-                    -- currentAmountLayout:addItem(currentAmountList)
+                    currentTotalAmountLayout:addItem(currentTotalAmountIcon)
+                    currentTotalAmountLayout:addItem(currentTotalAmountText)
+                    currentAmountTable:addRow({currentTotalAmountWrapper})
+                    currentAmountTable:addRow({api.gui.comp.TextView.new("Waiting:")})
+
+                    if station[asrEnum.station.CARGO_AMOUNTS] then
+                        for cargoId in pairs(station[asrEnum.station.CARGO_AMOUNTS]) do
+                            local cargoAmountLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
+                            local cargoAmountWrapper = api.gui.comp.Component.new("asrCargoAmountWrapper")
+                            cargoAmountWrapper:setLayout(cargoAmountLayout)
+        
+                            local cargoAmountIcon = api.gui.comp.ImageView.new("ui/hud/cargo_" .. string.lower(cargoTypes[tonumber(cargoId)]) .. "@2x.tga")
+                            cargoAmountIcon:setMaximumSize(api.gui.util.Size.new(15, 15))
+
+                            local cargoAmount = waitingCargoCounter[tostring(cargoId)]
+                            if not cargoAmount then cargoAmount = 0 end
+                            local cargoAmountText = api.gui.comp.TextView.new(tostring(cargoAmount))
+                            cargoAmountText:setId("asr.cargoAmounWaitingtText-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId .. "-" .. cargoId)
+                            cargoAmountLayout:addItem(cargoAmountIcon)
+                            cargoAmountLayout:addItem(cargoAmountText)
+                            currentAmountTable:addRow({cargoAmountWrapper})                
+                        end
+                    end
                     
-                    lineSettingsTable:addRow({currentAmountWrapper, amountSelectionTable})
+                    lineSettingsTable:addRow({currentAmountTable, amountSelectionTable})
                 end
 
                 local trainLengthTable = api.gui.comp.Table.new(3, 'NONE')
@@ -1717,16 +1800,16 @@ local function rebuildLineSettingsLayout()
                 for stopSequence, station in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS]) do
                     local stationEnabled = api.gui.util.getById("asr.stationEnabled-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
                     local amountSelectionTable = api.gui.util.getById("asr.amountSelectionTable-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
-                    local currentAmountWrapper = api.gui.util.getById("asr.currentAmountWrapper-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
-                    if stationEnabled ~= nil and amountSelectionTable ~= nil and currentAmountWrapper ~= nil then 
+                    local currentAmountTable = api.gui.util.getById("asr.currentAmountTable-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
+                    if stationEnabled ~= nil and amountSelectionTable ~= nil and currentAmountTable ~= nil then 
                         if station[asrEnum.station.ENABLED] == true then
                             stationEnabled:setSelected(true, false)
                             amountSelectionTable:setVisible(true, false)
-                            currentAmountWrapper:setVisible(true, false)
+                            currentAmountTable:setVisible(true, false)
                         else
                             stationEnabled:setSelected(false, false)
                             amountSelectionTable:setVisible(false, false)
-                            currentAmountWrapper:setVisible(false, false)
+                            currentAmountTable:setVisible(false, false)
                         end                        
                     end
                     local amountSelectionIndustryShippingButton = api.gui.util.getById("asr.amountSelectionIndustryShippingInput-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
@@ -2129,6 +2212,7 @@ local function rebuildShippingContractsLayout()
     local shippingContractsTable = asrGuiObjects.shippingContractsTable
     local shippingContractSettingsTable = asrGuiObjects.shippingContractSettingsTable
     local shippingContractIndustryDropDownList = asrGuiObjects.shippingContractIndustryDropDownList
+    -- local shippingContractCargoAmountsTable = asrGuiObjects.shippingContractCargoAmountsTable
 
     local selectedShippingContractId = asrGuiState.selectedShippingContract
 
@@ -2277,6 +2361,15 @@ local function rebuildShippingContractsLayout()
         asrGuiObjects.shippingContractIndustryDropDownList = shippingContractIndustryDropDownList
         log("gui: rebuildShippingContractsLayout: done building industry drop down")
     end
+
+    -- if shippingContractCargoAmountsTable == nil then
+    --     shippingContractCargoAmountsTable = api.gui.comp.Table.new(1, 'NONE')
+    --     shippingContractCargoAmountsTable:setGravity(0,0)
+    --     shippingContractCargoAmountsTable:setColWidth(0, 90)
+    --     shippingContractCargoAmountsTable:setVisible(false, false)
+    --     asrGuiObjects.shippingContractCargoAmountsTable = shippingContractCargoAmountsTable
+    --     shippingContractSettingsLayout:addItem(shippingContractCargoAmountsTable, api.gui.util.Rect.new(0,0, 100, 100))
+    -- end
 
     if asrGuiState.rebuildShippingContractsTable == true then
         log("gui: rebuildShippingContractsLayout: asrGuiState.rebuildShippingContractsTable is true")

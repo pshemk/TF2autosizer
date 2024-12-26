@@ -168,6 +168,12 @@ function data()
     padding = {0, 0, 0 ,0},
   })
   
+  a("!asrCargoList", {
+    backgroundColor = {0.17647059, 0.25098039, 0.24313725, 1},
+    -- backgroundColor = {0, 0, 0, 1},
+    padding = {0, 0, 0 ,0},
+  })
+
 
   return result
 end
