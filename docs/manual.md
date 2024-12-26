@@ -6,7 +6,7 @@ Autosizer is a mod that taps into the in-game cargo movement system in order to 
 
 ## The math behind it
 
-In TF2 each industry produces cargo. The given number of units (for example 400 Iron ore units for an iron ore mine) is produced during a single in-game period (which is by default one year, or 12 minutes of real-world time. By knowing the time it takes for the train(s) on the line to travel from the supplier industry to the consumer industry and the capacity of the wagons it's possible to calculate the transport rate. In fact the game already does this, this rate is visible in the line overview window:
+In TF2 each industry produces cargo. The given number of units (for example 400 iron ore units for an iron ore mine) is produced during a single in-game period (which is by default one year of in-game, or 12 minutes of real-world time). By knowing the time it takes for the train(s) on the line to travel from the supplier industry station to the consumer industry station and the capacity of the wagons it's possible to calculate the transport rate. In fact the game already does this, this rate is visible in the line overview window:
 
 ![Line overview](images/line_overview.png)
 
@@ -158,7 +158,7 @@ This number is used in train adjustment calculations to determine how long the t
 
 This option enables the departures scheduler at each station that's been configured.
 
-### Slow tracking details
+### Show tracking details
 
 This option enables an additional panel in the line settings that shows the current tracking information about the trains.
 
@@ -245,7 +245,7 @@ The mod discovers the models of the wagons on the line. When it needs to add mor
 
 ![Wagons](images/wagons.png)
 
-There can be multiple different models here, but they must have the same capacities, otherwise the mod refuses to enable the line. These models are cached once discovered. If you decide to change the model of the wagons by adding a new train with different models - they have to be manually rediscovered by using the 'Refresh' button, that forces the mod to scan all the trains on the line and identify the wagons.
+There can be multiple different models here, the mod identifies what types of cargo can be carried by each type of wagon. When new wagons need to be added - generic wagons (i.e. those that can carry more than one cargo) are preferred over specific ones. These models are cached once discovered. If you decide to change the model of the wagons by adding a new train with different models - they have to be manually rediscovered by using the 'Refresh' button, that forces the mod to scan all the trains on the line and identify the wagons.
 
 ## Other mods compatibility
 
@@ -287,10 +287,10 @@ One other consideration is the number of API calls made by the mod to the game. 
 
 5. If a train picks up multiple types of cargo at the station some capacity might be lost due to wagons not loading fully. This generally shouldn't be an issue, as some overprovisioning happens naturally.
 
-6. All wagons in a single train must be capable of carrying the same set of cargos. Mixinging of different types (like a boxcar and a tanker) is not supported.
+6. All wagons in a single train do not have to be capable of carrying the same set of cargos. The capacity for each type of cargo is tracked separately.
 
 7. Using full load all/any leads to much longer round-trip times, but the mod correctly takes this into account and creates longer trains as necessary. The  Timetable mod has the same effect.
 
 8. It's always the last wagons that get removed from the train. The maintenance data of the original engine and wagons is copied to the new train. That might result in the game displaying the train as having multiple groups of the same wagons (instead of just one group).
 
-9. Generation of the new train configuration happens as the train pulls into the station. If pickup of the waiting cargo is enabled - that's when the amount is calculated. If the train takes a while to unload there might be more cargo than what the train can load.
+9. Generation of the new train configuration happens as the train is almost offloaded. If the train is stopped by the scheduler the configuration is generated when the train is started again.
