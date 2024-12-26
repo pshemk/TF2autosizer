@@ -1242,7 +1242,9 @@ local function rebuildLineSettingsLayout()
                         if id == 0 then
 
                             currentAmountTable:deleteRows(1,currentAmountTable:getNumRows())
-                            currentAmountTable:addRow({api.gui.comp.TextView.new("Expected:")})
+                            local cargoAmountExpectedLabelText = api.gui.comp.TextView.new("Expected:")
+                            cargoAmountExpectedLabelText:setStyleClassList({"asrTableNoSpaces"})
+                            currentAmountTable:addRow({cargoAmountExpectedLabelText})
                             if station[asrEnum.station.CARGO_AMOUNTS] then
                                 for cargoId, cargoAmount in pairs(station[asrEnum.station.CARGO_AMOUNTS]) do
                                     local cargoAmountLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
@@ -1262,7 +1264,9 @@ local function rebuildLineSettingsLayout()
                         elseif id == -1 then
 
                             currentAmountTable:deleteRows(1,currentAmountTable:getNumRows())
-                            currentAmountTable:addRow({api.gui.comp.TextView.new("Waiting:")})
+                            local cargoAmountWaitingLabelText = api.gui.comp.TextView.new("Waiting:")
+                            cargoAmountWaitingLabelText:setStyleClassList({"asrTableNoSpaces"})
+                            currentAmountTable:addRow({cargoAmountWaitingLabelText})
         
                             if station[asrEnum.station.CARGO_AMOUNTS] then
                                 for cargoId in pairs(station[asrEnum.station.CARGO_AMOUNTS]) do
@@ -1301,7 +1305,10 @@ local function rebuildLineSettingsLayout()
                     currentTotalAmountLayout:addItem(currentTotalAmountIcon)
                     currentTotalAmountLayout:addItem(currentTotalAmountText)
                     currentAmountTable:addRow({currentTotalAmountWrapper})
-                    currentAmountTable:addRow({api.gui.comp.TextView.new("Waiting:")})
+                    local cargoAmountWaitingLabelText = api.gui.comp.TextView.new("Waiting:")
+                    cargoAmountWaitingLabelText:setStyleClassList({"asrTableNoSpaces"})
+                    currentAmountTable:addRow({cargoAmountWaitingLabelText})
+
 
                     if station[asrEnum.station.CARGO_AMOUNTS] then
                         for cargoId in pairs(station[asrEnum.station.CARGO_AMOUNTS]) do
