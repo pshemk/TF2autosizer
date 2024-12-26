@@ -1627,7 +1627,7 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
             if cargoStatusDetails.requiredCapacity > 0 then
                 for idx, cargoType  in pairs(trainWagonUsed) do
                     if cargoType == cargoId then
-                        table.insert(newTrainConfig, { type = "copy", source = idx, cargoId = cargoId })
+                        table.insert(newTrainConfig, { type = "copy", source = idx, cargoId = cargoId, modelId = trainWagonModels[idx] })
                         -- log("engine: train " .. getTrainName(trainId) .. " cargo: " ..  string.upper(cargoTypes[tonumber(cargoId)]) .. " idx: " .. idx .. " modelId: " .. trainWagonModels[idx])
                         addedCapacity = addedCapacity + engineState[asrEnum.MODEL_CACHE][tostring(trainWagonModels[idx])][asrEnum.modelCache.CAPACITIES][string.upper(cargoTypes[tonumber(cargoId)])]
                         if addedCapacity >= cargoStatusDetails.requiredCapacity then
@@ -1658,6 +1658,69 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
                  end
             end
         end
+        -- check if there's at least one wagon for each cargo type
+        -- to avoid breaking the supply chains
+        for cargoId, cargoWagonMap in pairs(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.CARGO_WAGON_MAP]) do
+            -- first check generic ones
+            local wagonFound = false
+            for _, wagonModelId in pairs(cargoWagonMap[asrEnum.cargoWagonMap.GENERIC]) do
+                for _, wagonDetails in  pairs(newTrainConfig) do
+                    if wagonDetails.modelId and tonumber(wagonDetails.modelId) == tonumber(wagonModelId) then
+                        wagonFound = true
+                        break
+                    end
+                end
+                if wagonFound then
+                    break
+                end
+            end
+            if not wagonFound then 
+                -- look through specific
+                for _, wagonModelId in pairs(cargoWagonMap[asrEnum.cargoWagonMap.SPECIFIC]) do
+                    for _, wagonDetails in  pairs(newTrainConfig) do
+                        if wagonDetails.modelId and tonumber(wagonDetails.modelId) == tonumber(wagonModelId) then
+                            wagonFound = true
+                            break
+                        end
+                    end
+                    if wagonFound then
+                        break
+                    end
+                end
+            end
+
+            -- still not found? - add a wagon - prefer a generic one
+            if not wagonFound then
+                if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.CARGO_WAGON_MAP][tostring(cargoId)][asrEnum.cargoWagonMap.GENERIC] and
+                    #engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.CARGO_WAGON_MAP][tostring(cargoId)][asrEnum.cargoWagonMap.GENERIC] > 0 then
+                    local modelId = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.CARGO_WAGON_MAP][tostring(cargoId)][asrEnum.cargoWagonMap.GENERIC][1]
+                    table.insert(newTrainConfig, { type = "new", modelId = modelId, kind = "generic-extra", cargoId = cargoId  })
+                elseif engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.CARGO_WAGON_MAP][tostring(cargoId)][asrEnum.cargoWagonMap.SPECIFIC] and
+                    #engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.CARGO_WAGON_MAP][tostring(cargoId)][asrEnum.cargoWagonMap.SPECIFIC] > 0 then
+                    local modelId = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.CARGO_WAGON_MAP][tostring(cargoId)][asrEnum.cargoWagonMap.SPECIFIC][1]
+                    table.insert(newTrainConfig, { type = "new", modelId = modelId, kind = "specific-extra", cargoId = cargoId  })
+                end
+            end
+        end
+
+        -- check if we have the minimal number of wagons required 
+        if engineState[asrEnum.SETTINGS] and engineState[asrEnum.SETTINGS][asrEnum.settings.MINIMAL_WAGON_COUNT] and 
+            #newTrainConfig - engineCount < engineState[asrEnum.SETTINGS][asrEnum.settings.MINIMAL_WAGON_COUNT] then
+            
+            for cargoId, cargoWagonMap in pairs(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.CARGO_WAGON_MAP]) do
+                -- first check generic ones
+                if #cargoWagonMap[asrEnum.cargoWagonMap.GENERIC] > 0 then
+                    for i = 0, engineState[asrEnum.SETTINGS][asrEnum.settings.MINIMAL_WAGON_COUNT] - #newTrainConfig - engineCount + 1 do 
+                        table.insert(newTrainConfig, { type = "new", modelId = cargoWagonMap[asrEnum.cargoWagonMap.GENERIC][1], kind = "generic-zero", cargoId = cargoId  })
+                    end
+                elseif #cargoWagonMap[asrEnum.cargoWagonMap.SPECIFIC] > 0 then
+                    for i = 0, engineState[asrEnum.SETTINGS][asrEnum.settings.MINIMAL_WAGON_COUNT] - #newTrainConfig - engineCount + 1 do 
+                        table.insert(newTrainConfig, { type = "new", modelId = cargoWagonMap[asrEnum.cargoWagonMap.SPECIFIC][1], kind = "specific-zero", cargoId = cargoId  })
+                    end
+                end
+            end
+        end
+
 
         -- config generated, turn it into a train config
         log("engine: train " .. getTrainName(trainId) .. " new train config created")
