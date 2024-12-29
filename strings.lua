@@ -4,6 +4,8 @@ function data()
             add = "Add",
             adjust_capacity = "Adjust capacity",
             adjust_capacity_tip = "Adjustment of the calculated capacity.",
+            all_is_well = "All is well",
+            capacity_warning = "More cargo than expected was waiting at:",
             cargo_group = "Cargo group",
             cargo_tracking = "Cargo Tracking",
             consumer = "Consumer",
@@ -19,9 +21,11 @@ function data()
             enable_scheduler = "Enable scheduler",
             enable_timings = "Enable timings",
             enabled = "Enabled",
+            expecting_cargo = "Expecting:",
             fixed_amount = "Fixed amount",
             in_use_cant_delete = "In use, can't delete",
             industry = "Industry",
+            length_warning = "Required trains would have been longer than allowed at:",
             line_name = "Line name",
             lines = "Lines",
             loading = "Loading",
@@ -29,10 +33,10 @@ function data()
             minimal_train_wagon_count = "Minimal train wagon count",
             minimal_train_wagon_count_tip = "Minimal number of wagons each train should always have",
             mod_desc = [[
-[h1]Train Autosizer[/h1]
+Train Autosizer
 
-This mod allows you to change train length automatically at a station, according to set rules. It aims to simplify line management and maintain sufficient capacity when requirements change. 
-It can track the production or consumption of an industry (or a town) and calculate the required amount of wagons neccessary to carry all the cargo. If the production changes - the train length gets adjusted automatically. 
+This mod allows you to change train length automatically at a station in order to accomodate for the cargos. It aims to simplify line management and maintain sufficient capacity when requirements change. 
+It can track the production or consumption of an industry (or a town) and calculate the required amount of wagons neccessary to carry all the cargo. If the production changes - the train length gets adjusted automatically. I can track multiple types of cargo on a single line and select the correct wagons to carry it. 
 In additon to simply tracking industries it can also use groupings, such as "shipping contracts" or "cargo groups" to enable more complex scenarios, such as cargo hubs. The trains can also be configured to pick up cargo currently waiting at the station.
 It can also schedule the trains on the line to maintain even distribution, allowing completly turn off 'full load all/any' and still have fully loaded trains.
 
@@ -76,6 +80,7 @@ If you like my mod [url=https://buymeacoffee.com/peteraklnz]buy me a coffee :-) 
             wagons = "Wagons",
             wagons_refresh_tip = "Rebuild the list of available wagons",
             waiting = "Waiting",
+            waiting_cargo = "Waiting:"
     }
 }
 end

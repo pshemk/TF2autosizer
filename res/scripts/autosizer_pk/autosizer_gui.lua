@@ -65,6 +65,7 @@ local i18Strings =  {
     enable_timings = _("enable_timings"),
     enable_scheduler = _("enable_scheduler"),
     enabled = _("enabled"),
+    expecting_cargo = _("expecting_cargo"),
     fixed_amount = _("fixed_amount"),
     in_use_cant_delete = _("in_use_cant_delete"),
     industry = _("industry"),
@@ -108,6 +109,7 @@ local i18Strings =  {
     wagons = _("wagons"),
     wagons_refresh_tip = _("wagons_refresh_tip"),
     waiting = _("waiting"),
+    waiting_cargo = _("waiting_cargo")
 }
 
 
@@ -1240,13 +1242,12 @@ local function rebuildLineSettingsLayout()
 
                     currentAmountTable:onHover(function (id) 
                         if id == 0 then
-
                             currentAmountTable:deleteRows(1,currentAmountTable:getNumRows())
-                            local cargoAmountExpectedLabelText = api.gui.comp.TextView.new("Expected:")
+                            local cargoAmountExpectedLabelText = api.gui.comp.TextView.new(i18Strings.expecting_cargo)
                             cargoAmountExpectedLabelText:setStyleClassList({"asrTableNoSpaces"})
                             currentAmountTable:addRow({cargoAmountExpectedLabelText})
                             if station[asrEnum.station.CARGO_AMOUNTS] then
-                                for cargoId, cargoAmount in pairs(station[asrEnum.station.CARGO_AMOUNTS]) do
+                                for cargoId, cargoAmount in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.CARGO_AMOUNTS]) do
                                     local cargoAmountLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
                                     local cargoAmountWrapper = api.gui.comp.Component.new("asrCargoAmountWrapper")
                                     cargoAmountWrapper:setLayout(cargoAmountLayout)
@@ -1262,9 +1263,8 @@ local function rebuildLineSettingsLayout()
                                 end
                             end
                         elseif id == -1 then
-
                             currentAmountTable:deleteRows(1,currentAmountTable:getNumRows())
-                            local cargoAmountWaitingLabelText = api.gui.comp.TextView.new("Waiting:")
+                            local cargoAmountWaitingLabelText = api.gui.comp.TextView.new(i18Strings.waiting_cargo)
                             cargoAmountWaitingLabelText:setStyleClassList({"asrTableNoSpaces"})
                             currentAmountTable:addRow({cargoAmountWaitingLabelText})
         
@@ -1308,7 +1308,6 @@ local function rebuildLineSettingsLayout()
                     local cargoAmountWaitingLabelText = api.gui.comp.TextView.new("Waiting:")
                     cargoAmountWaitingLabelText:setStyleClassList({"asrTableNoSpaces"})
                     currentAmountTable:addRow({cargoAmountWaitingLabelText})
-
 
                     if station[asrEnum.station.CARGO_AMOUNTS] then
                         for cargoId in pairs(station[asrEnum.station.CARGO_AMOUNTS]) do
@@ -1487,7 +1486,9 @@ local function rebuildLineSettingsLayout()
     
                 if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES] and 
                     asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS] then
-                    for _, wagonId in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS]) do
+                    local wagonList = asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS]
+                    table.sort(wagonList)
+                    for _, wagonId in pairs(wagonList) do
                         local wagonDetails = api.res.modelRep.get(tonumber(wagonId))
                         local wagonInfo 
                         if wagonDetails and wagonDetails.metadata and wagonDetails.metadata.description then
@@ -1677,7 +1678,9 @@ local function rebuildLineSettingsLayout()
 
                 if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES] and 
                     asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS] then
-                    for _, wagonId in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS]) do
+                    local wagonList = asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS]
+                    table.sort(wagonList)
+                    for _, wagonId in pairs(wagonList) do
                         local wagonDetails = api.res.modelRep.get(tonumber(wagonId))
                         local wagonInfo 
                         if wagonDetails and wagonDetails.metadata and wagonDetails.metadata.description then
@@ -1941,17 +1944,22 @@ local function rebuildLineSettingsLayout()
                     end
 
                     if station[asrEnum.station.CARGO_AMOUNTS] then
-                        for cargoId in pairs(station[asrEnum.station.CARGO_AMOUNTS]) do
+                        for cargoId, expectedCargoAmount in pairs(station[asrEnum.station.CARGO_AMOUNTS]) do
 
-                            local cargoAmount = waitingCargoCounter[tostring(cargoId)]
-                            if not cargoAmount then cargoAmount = 0 end
-                            local cargoAmountText = api.gui.util.getById("asr.cargoAmounWaitingtText-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId .. "-" .. cargoId)
-                            if cargoAmountText then
-                                cargoAmountText:setText(tostring(cargoAmount), false)
+                            local waitingCargoAmount = waitingCargoCounter[tostring(cargoId)]
+                            if not waitingCargoAmount then waitingCargoAmount = 0 end
+                            if not expectedCargoAmount then expectedCargoAmount = 0 end
+                            local waitingCargoAmountText = api.gui.util.getById("asr.cargoAmounWaitingtText-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId .. "-" .. cargoId)
+                            local expectedCargoAmountText = api.gui.util.getById("asr.expectedAmountText-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId .. "-" .. cargoId)
+
+                            if waitingCargoAmountText then
+                                waitingCargoAmountText:setText(tostring(waitingCargoAmount), false)
+                            end
+                            if expectedCargoAmountText then
+                                expectedCargoAmountText:setText(tostring(expectedCargoAmount), false)
                             end
                         end
                     end
-
 
                     if asrState[asrEnum.SETTINGS][asrEnum.settings.SCHEDULER_ENABLED] then 
                         local scheduleDeparturesCheckBox = api.gui.util.getById("asr.scheduleDeparturesCheckbox-" .. stopSequence .. "-" .. station[asrEnum.station.STATION_ID] .. "-" .. lineId)
