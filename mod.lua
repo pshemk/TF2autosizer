@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 16,   -- status window and capacity notifications
+      minorVersion = 17,   -- handling of cargo types per train
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
