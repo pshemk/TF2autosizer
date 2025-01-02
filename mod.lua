@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 17,   -- handling of cargo types per train
+      minorVersion = 18,   -- train setup autodetection crash fix, UI safeguard 1
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
