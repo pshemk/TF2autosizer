@@ -259,6 +259,7 @@ local function getDistance(table, row)
             totalHeight = totalHeight + asrGuiObjects[table]:getRowHeight(i)
         end
     end
+    if totalHeight < 0 then totalHeight = 0 end
     log("gui: distance height: " .. totalHeight)
     return totalHeight
 end
