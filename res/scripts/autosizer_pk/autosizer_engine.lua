@@ -2173,7 +2173,7 @@ end
 local function generateTrainConfig(trainId, lineId, stopIndex)
 
     -- generate new train configuration 
-    if engineState[asrEnum.LINES] and engineState[asrEnum.LINES][tostring(lineId)] and engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS] and engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1] then
+    if engineState[asrEnum.LINES] and engineState[asrEnum.LINES][tostring(lineId)] and engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS] and engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1] and engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.ENABLED] then
 
         local travelTime = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAVEL_TIME]
         local cargoAmount = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CARGO_AMOUNT]
@@ -2659,6 +2659,17 @@ local function checkTrainsPositions()
                     log("engine: train " .. getTrainName(trainId) .. " is no longer tracked (line disabled)")
                     engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] = nil 
                 end
+            end
+            -- if the train is en route and in station - something went wrong - report this and correct it
+            if trainCurrentInfo and trainCurrentInfo.state == api.type.enum.TransportVehicleState.EN_ROUTE and 
+                trainPrevInfo[asrEnum.trackedTrain.IN_STATION] and not trainPrevInfo[asrEnum.trackedTrain.DELETE_ON_EXIT] and engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then
+                log("engine: train " .. getTrainName(trainId) .. " tracking state error, correcting")
+                engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] = 
+                {
+                    [asrEnum.trackedTrain.TIME_UNTIL_LOAD] = trainPrevInfo[asrEnum.trackedTrain.TIME_UNTIL_LOAD],
+                    [asrEnum.trackedTrain.STATE] = trainPrevInfo[asrEnum.trackedTrain.STATE],
+                    [asrEnum.trackedTrain.WAGON_COUNT] = trainPrevInfo[asrEnum.trackedTrain.WAGON_COUNT],
+                }
             end
         else
             -- the train most likely got sold, stop tracking

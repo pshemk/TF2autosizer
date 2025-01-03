@@ -260,6 +260,7 @@ local function getDistance(table, row)
         end
     end
     if totalHeight < 0 then totalHeight = 0 end
+    if totalHeight > (row + 1) * 50 then totalHeight = (row + 1) * 35 end
     log("gui: distance height: " .. totalHeight)
     return totalHeight
 end
