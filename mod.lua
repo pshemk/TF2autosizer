@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 18,   -- train setup autodetection crash fix, UI safeguard 1
+      minorVersion = 19,   -- autocorrect broken train tarcking state, UI safeguard 2
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
