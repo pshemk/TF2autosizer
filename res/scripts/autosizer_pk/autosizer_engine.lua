@@ -3,11 +3,8 @@ local asrEnum = require "autosizer_pk/autosizer_enums"
 
 local asrEngine = {}
 
-
-local releaseVersion = "1.0.8"
-
 -- the main state variable, stored in savefiles 
-local engineState = {}
+local engineState = asrHelper.tableCreate(asrEnum.MODEL_CACHE)  -- refer to the last value
 
 -- local cache for some model properties, to avoid api calls
 -- local modelCache = {}
@@ -15,6 +12,8 @@ local engineState = {}
 -- local cache for industries and buildings to avoid api calls
 local consumerCache = {}
 
+-- garbage collection timestamp
+local lastGarbageCollection = os.time()
 
 -- local cache for train configs
 local trainConfigCache = {}
@@ -543,13 +542,13 @@ local function updateLinesInfo()
         if engineState[asrEnum.LINES][tostring(lineId)] == nil then
             log("updateLinesInfo: no info about line " .. lineId)
             linesUpdated = true
-            engineState[asrEnum.LINES][tostring(lineId)] = {}
+            engineState[asrEnum.LINES][tostring(lineId)] = asrHelper.tableCreate(#asrEnum.line)
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ENABLED] = false
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS] = {}
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.INDUSTRIES] = {}
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES] = {}
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Disabled"
-            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] = {}
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] = asrHelper.tableCreate(#asrEnum.lineSettngs)
         end
     end
 
@@ -3156,10 +3155,7 @@ function asrEngine.handleEvent(id, params)
         gatherLineInfo(params.lineId)
     elseif id == "asrForceLineCheck" then
         log("engine: force line check")
-        updateLinesInfo()
-        updateLinesNames()
-        updateTrainsInfo()
-        flushTrackingInfo()
+        flags.refreshLines = true
     elseif id == "asrStopRefresh" then
         log("engine: refresh disabled")
         flags.refreshEnabled = false
@@ -3314,13 +3310,30 @@ function asrEngine.update()
                 flags.refreshNames = false
             end
 
+            if flags.refreshLines then
+                log("engine: refreshing lines")
+                updateLinesInfo()
+                updateLinesNames()
+                updateTrainsInfo()
+                flushTrackingInfo()                        
+                flags.refreshLines = false
+            end
+
             if engineState[asrEnum.STATUS][asrEnum.status.TIMINGS_ENABLED] then  storeTimings("Total", math.ceil((os.clock() - startTime)*1000000)/1000) end
+
+            if os.time() - lastGarbageCollection > 60 then
+                local memoryUsedBefore = api.util.getLuaUsedMemory()
+                collectgarbage()
+                lastGarbageCollection = os.time()
+                local memoryUsedAfter = api.util.getLuaUsedMemory()
+                log("engine: garbage collection done, using: " .. math.ceil(memoryUsedAfter/1024) .. "kB, freed: " .. math.ceil((memoryUsedBefore - memoryUsedAfter)/1024) .. "kB")
+                end
+    
         end
     end
 
     -- initial setup
     if not flags.initDone then
-        print("autosizer - initialising - version " .. releaseVersion) 
         -- check if we have the default settings
         if engineState[asrEnum.SETTINGS] == nil then
             engineState[asrEnum.SETTINGS] = {}

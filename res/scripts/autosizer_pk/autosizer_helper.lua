@@ -155,4 +155,14 @@ function asrHelper.max(table)
   return max
 end
 
+function asrHelper.tableCreate(size)
+
+  local table = {}
+  for i = 1, size do
+    table[i] = false
+  end
+
+  return table
+end
+
 return asrHelper

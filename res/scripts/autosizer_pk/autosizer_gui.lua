@@ -35,6 +35,9 @@ local asrGuiState = {
 local asrGuiObjects = {}
 local asrState = {}
 
+-- garbage collection
+local lastGarbageCollection = os.time()
+
 -- engine commmunication
 local asrLastEngineTimestamp = nil
 local asrLastLinesVersion = nil
@@ -260,7 +263,7 @@ local function getDistance(table, row)
         end
     end
     if totalHeight < 0 then totalHeight = 0 end
-    if totalHeight > (row + 1) * 50 then totalHeight = (row + 1) * 35 end
+    if totalHeight > 10000 then totalHeight = (row + 1) * 38 end
     log("gui: distance height: " .. totalHeight)
     return totalHeight
 end
@@ -4609,6 +4612,14 @@ function asrGui.guiUpdate()
             rebuildLineSettingsLayout()
             asrGuiState.rebuildLinesTable = false
         end    
+    else
+        if os.time() - lastGarbageCollection > 60 then
+            local memoryUsedBefore = api.util.getLuaUsedMemory()
+            collectgarbage()
+            lastGarbageCollection = os.time()
+            local memoryUsedAfter = api.util.getLuaUsedMemory()
+            log("gui: garbage collection done, using: " .. math.ceil(memoryUsedAfter/1024) .. "kB, freed: " .. math.ceil((memoryUsedBefore - memoryUsedAfter)/1024) .. "kB")
+        end
     end
 end
 
