@@ -2218,6 +2218,9 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
             local currentWagonCount = 0
             local currentEngineCount = 0
             for _, vehicle in pairs(trainVehicles) do
+                if not engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)] then
+                    getModelDetails(tostring(vehicle.part.modelId))
+                end 
                 if engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)][asrEnum.modelCache.TYPE] == "engine" then currentEngineCount = currentEngineCount + 1 end
                 if engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)][asrEnum.modelCache.TYPE] == "wagon" then currentWagonCount = currentWagonCount + 1 end
             end
