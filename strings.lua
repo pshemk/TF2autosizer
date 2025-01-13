@@ -40,7 +40,7 @@ It can track the production or consumption of an industry (or a town) and calcul
 In additon to simply tracking industries it can also use groupings, such as "shipping contracts" or "cargo groups" to enable more complex scenarios, such as cargo hubs. The trains can also be configured to pick up cargo currently waiting at the station.
 It can also schedule the trains on the line to maintain even distribution, allowing completly turn off 'full load all/any' and still have fully loaded trains.
 
-The manual is available on [url=https://github.com/pshemk/TF2autosizer/blob/main/docs/manual.md]GitHub[/url]
+The manual is available on [url=https://github.com/pshemk/TF2autosizer/blob/main/res/documents/manual.md]GitHub[/url]
 
 If you find a bug or would like to see some other changes - please raise an issue on GitHub.
 
