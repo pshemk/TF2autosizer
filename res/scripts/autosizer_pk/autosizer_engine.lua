@@ -4,7 +4,7 @@ local asrEnum = require "autosizer_pk/autosizer_enums"
 local asrEngine = {}
 
 -- the main state variable, stored in savefiles 
-local engineState = asrHelper.tableCreate(asrEnum.MODEL_CACHE)  -- refer to the last value
+local engineState = {}
 
 -- local cache for some model properties, to avoid api calls
 -- local modelCache = {}
@@ -542,13 +542,13 @@ local function updateLinesInfo()
         if engineState[asrEnum.LINES][tostring(lineId)] == nil then
             log("updateLinesInfo: no info about line " .. lineId)
             linesUpdated = true
-            engineState[asrEnum.LINES][tostring(lineId)] = asrHelper.tableCreate(#asrEnum.line)
+            engineState[asrEnum.LINES][tostring(lineId)] = {}
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ENABLED] = false
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS] = {}
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.INDUSTRIES] = {}
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES] = {}
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Disabled"
-            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] = asrHelper.tableCreate(#asrEnum.lineSettngs)
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] = {}
         end
     end
 
