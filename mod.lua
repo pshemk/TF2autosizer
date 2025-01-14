@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 19,   -- autocorrect broken train tarcking state, UI safeguard 2
+      minorVersion = 20,   -- memory optmisation
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
