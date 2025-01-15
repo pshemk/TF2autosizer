@@ -1837,6 +1837,7 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
                 log("engine: train " .. getTrainName(trainId) .. " would be too long")
             else
                 log("engine: train " .. getTrainName(trainId) .. " would be too long, but not reporting it")
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING] = false
             end
         else
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING] = false
@@ -2311,7 +2312,7 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
                             end
                         end                        
 
-                        if currentCapacity > requiredCapacity and currentCapacity <  requiredCapacity + maxWagonCapacity then
+                        if currentCapacity >= requiredCapacity and currentCapacity <  requiredCapacity + maxWagonCapacity then
                             print("engine: train " .. getTrainName(trainId) .. " cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " capacity OK")
                         else
                             print("engine: train " .. getTrainName(trainId) .. " cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " capacity must be adjusted, current: " .. currentCapacity .. " required: " .. requiredCapacity .. " wagon capacity: " .. maxWagonCapacity) 
@@ -2556,7 +2557,7 @@ local function checkTrainsPositions()
 
                 -- check if the train hasn't been here for more than 2 full round trips - it might be getting stuck due to other trains resetting station arrival times
                 if getGameTime() - trainPrevInfo[asrEnum.trackedTrain.ARRIVAL_TIMESTAMP] > 2 * engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME] then 
-                    log("engine: train " .. getTrainName(trainId) .. " seems to be stuck at a station, starting)")
+                    log("engine: train " .. getTrainName(trainId) .. " seems to be stuck at a station, starting, travel time: " .. engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME])
                     departureTime = getGameTime()
                 end
                 if departureTime - 0.5 <= getGameTime()  then      
