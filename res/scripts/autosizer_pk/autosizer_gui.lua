@@ -1714,6 +1714,7 @@ local function rebuildLineSettingsLayout()
 
                 if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST] then
                     for _, trainId in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST]) do 
+                        if not api.engine.entityExists(tonumber(trainId)) then break end
                         local trainNameAPI = api.engine.getComponent(tonumber(trainId), api.type.ComponentType.NAME)
                         local trainName = trainNameAPI.name
 
