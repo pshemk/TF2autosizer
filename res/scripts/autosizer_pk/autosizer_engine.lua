@@ -1547,9 +1547,19 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
             end
         end
         if tooMuchCargoWaiting then
-            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING] = true
+            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] and 
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] >= 1 then 
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING] = true
+            else
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] = 1
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING] = false
+            end
         else
+            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] then
+                log("engine: train " .. getTrainName(trainId) .. " clearing a one-off capacity warning at stop index: " .. stopIndex  .. ", line id: " .. lineId)
+            end
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING] = false
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] = nil
         end
 
         -- log("engine: train " .. getTrainName(trainId) .. " cargo status 1: ")
@@ -1833,14 +1843,27 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
         if trainTooLong then
             -- only if waiting cargo pickup is not enabled 
             if not engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.WAITING_CARGO_ENABLED] then 
-                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING] = true
-                log("engine: train " .. getTrainName(trainId) .. " would be too long")
+                if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] and 
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] >= 1 then
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING] = true
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] + 1
+                    log("engine: train " .. getTrainName(trainId) .. " would be too long (raising a warning), line id: " .. lineId)
+                else
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] = 1
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING] = false
+                    log("engine: train " .. getTrainName(trainId) .. " would be too long (not raising a warning yet), line id: " .. lineId)
+                end
             else
                 log("engine: train " .. getTrainName(trainId) .. " would be too long, but not reporting it")
                 engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING] = false
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] = nil
             end
         else
+            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] then
+                log("engine: train " .. getTrainName(trainId) .. " clearing a one-off length warning at stop index: " .. stopIndex .. ", line id: " .. lineId)
+            end
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING] = false
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] = nil
         end
 
         -- check all stations for flags
@@ -1851,6 +1874,9 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
                 local stationName = api.engine.getComponent(stationDetails[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME)
                 if stationName and stationName.name then
                     lengthWarningMessage = lengthWarningMessage .. "\n" .. stationName.name
+                    if stationDetails[asrEnum.station.LENGTH_WARNING_COUNT] then
+                        lengthWarningMessage = lengthWarningMessage .. " (x" .. stationDetails[asrEnum.station.LENGTH_WARNING_COUNT] .. ")"
+                    end
                 end
                 lengthWarning = true
             end
@@ -1863,6 +1889,9 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
                 local stationName = api.engine.getComponent(stationDetails[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME)
                 if stationName and stationName.name then
                     capacityWarningMessage = capacityWarningMessage .. "\n" .. stationName.name
+                    if stationDetails[asrEnum.station.CAPACITY_WARNING_COUNT] then
+                        capacityWarningMessage = capacityWarningMessage .. " (x" .. stationDetails[asrEnum.station.CAPACITY_WARNING_COUNT] .. ")"
+                    end
                 end
                 capacityWarning = true
             end
@@ -1949,10 +1978,22 @@ local function generateTrainConfigForASingleAmount(trainId, lineId, stopIndex)
 
         if cargoEntityCounter > 3 * cargoAmount then
             -- we have more cargo then expected - raise a warning
-            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING] = true
-            log("engine: train " .. getTrainName(trainId) .. " at stop: " .. stopIndex .. " too much cargo waiting: " .. cargoEntityCounter .. " expected max of: " .. cargoAmount)
+            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] and 
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] >= 1 then 
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING] = true
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] + 1
+                log("engine: train " .. getTrainName(trainId) .. " at stop: " .. stopIndex .. " too much cargo waiting: " .. cargoEntityCounter .. " expected max of: " .. cargoAmount .. "(raising a warning), line id: " .. lineId)
+            else
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] = 1
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING] = false
+                log("engine: train " .. getTrainName(trainId) .. " at stop: " .. stopIndex .. " too much cargo waiting: " .. cargoEntityCounter .. " expected max of: " .. cargoAmount .. "(not raising a warning yet), line id: " .. lineId)
+            end
         else
+            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] then
+                log("engine: train " .. getTrainName(trainId) .. " clearing a one-off capacity warning at stop index: " .. stopIndex  .. ", line id: " .. lineId)
+            end
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING] = false
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] = nil
         end
         
         -- check if we need to accomodate for waiting cargo
@@ -2111,11 +2152,23 @@ local function generateTrainConfigForASingleAmount(trainId, lineId, stopIndex)
         if trainTooLong then
             -- only if waiting cargo pickup is not enabled 
             if not engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.WAITING_CARGO_ENABLED] then 
-                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING] = true
-                log("engine: train " .. getTrainName(trainId) .. " would be too long")
+                if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] and 
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] >= 1 then
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING] = true
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] + 1
+                    log("engine: train " .. getTrainName(trainId) .. " would be too long (raising a warning), line id: " .. lineId)
+                else
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] = 1
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING] = false
+                    log("engine: train " .. getTrainName(trainId) .. " would be too long (not raising a warning yet), line id: " .. lineId)
+                end
             end
         else
+            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] then
+                log("engine: train " .. getTrainName(trainId) .. " clearing a one-off length warning at stop index: " .. stopIndex  .. ", line id: " .. lineId)
+            end            
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING] = false
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.LENGTH_WARNING_COUNT] = nil
         end
 
         -- check all stations for flags
@@ -2126,6 +2179,9 @@ local function generateTrainConfigForASingleAmount(trainId, lineId, stopIndex)
                 local stationName = api.engine.getComponent(stationDetails[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME)
                 if stationName and stationName.name then
                     lengthWarningMessage = lengthWarningMessage .. "\n" .. stationName.name
+                    if stationDetails[asrEnum.station.LENGTH_WARNING_COUNT] then
+                        lengthWarningMessage = lengthWarningMessage .. " (x" .. stationDetails[asrEnum.station.LENGTH_WARNING_COUNT] .. ")"
+                    end
                 end
                 lengthWarning = true
             end
@@ -2138,6 +2194,9 @@ local function generateTrainConfigForASingleAmount(trainId, lineId, stopIndex)
                 local stationName = api.engine.getComponent(stationDetails[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME)
                 if stationName and stationName.name then
                     capacityWarningMessage = capacityWarningMessage .. "\n" .. stationName.name
+                    if stationDetails[asrEnum.station.CAPACITY_WARNING_COUNT] then
+                        capacityWarningMessage = capacityWarningMessage .. " (x" .. stationDetails[asrEnum.station.CAPACITY_WARNING_COUNT] .. ")"
+                    end
                 end
                 capacityWarning = true
             end

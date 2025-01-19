@@ -75,6 +75,9 @@ asrEnum.station.UNLOAD_TIMESTAMP                = 21
 asrEnum.station.WAITING_CARGO_BACKLOG_ONLY      = 22
 asrEnum.station.CAPACITY_WARNING                = 23
 asrEnum.station.CARGO_AMOUNTS                   = 24
+asrEnum.station.LENGTH_WARNING_COUNT            = 25
+asrEnum.station.CAPACITY_WARNING_COUNT          = 26
+
 
 -- LINE VEHICLES
 asrEnum.vehicle                                 = {}
