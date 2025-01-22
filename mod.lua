@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 20,   -- memory optmisation
+      minorVersion = 21,   -- multi-compartment fix and unexpected cargo warning
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
