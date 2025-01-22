@@ -40,7 +40,7 @@ function data()
     margin = {0, 0, 0, 0},
   })
 
-  a("!asrLineStatusError", {
+  a("!asrLineStatusUnknownCargo", {
     color = {0.89411765, 0.03137255, 0.03921569, 1},
     fontSize = 27,
     padding = {0, 3, 0 ,3},
@@ -72,6 +72,20 @@ function data()
     margin = {0, 0, 0, 0},
   })
 
+  a("!asrLineFilterUnknownCargo", {
+    color = {0.89411765, 0.03137255, 0.03921569, 1},
+    fontSize = 27,
+    padding = {-5, 0, 0, 0},
+    margin = {0, 0, 0, 0},
+  })
+
+  a("!asrLineFilterConfigured", {
+    color = {0.14117647, 0.40784314, 0.82352941, 1},
+    fontSize = 27,
+    padding = {-5, 0, 0, 0},
+    margin = {0, 0, 0, 0},
+  })
+
 
   a("!asrLineStatusIncompatible", {
     color = {0, 0 , 0, 1},
@@ -92,7 +106,6 @@ function data()
     padding = {-5, 0, 0, 0},
     margin = {0, 0, 0, 0},
   })
-
 
   a("!asrLineStatusConfigured", {
     color = {0.14117647, 0.40784314, 0.82352941, 1},
@@ -140,7 +153,7 @@ function data()
   })
 
   a("!asrScrollFilterTextInput", {
-    margin = {0, 0 ,0 , 155}
+    margin = {0, 0 ,0 , 105}
   })
 
   a("!asrDropList", {

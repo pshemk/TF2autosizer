@@ -76,6 +76,7 @@ If you like my mod [url=https://buymeacoffee.com/peteraklnz]buy me a coffee :-) 
             train_length = "Train length",
             trains = "Trains",
             tracked = "Train is being tracked",
+            unknown_cargo_warning = "Unexpected cargo found at:",
             unloading = "Unloading",
             wagons = "Wagons",
             wagons_refresh_tip = "Rebuild the list of available wagons",

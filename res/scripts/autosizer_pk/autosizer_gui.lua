@@ -3908,6 +3908,24 @@ local function buildMainWindow()
         rebuildLinesTable()
     end)
 
+    local linesScrollFilterStatusUnknownCargoLabel = api.gui.comp.TextView.new("●")
+    linesScrollFilterStatusUnknownCargoLabel:setStyleClassList({"asrLineFilterUnknownCargo"})
+    linesScrollFilterStatusUnknownCargoLabel:setTooltip("Lines with unexpected cargo")
+    local linesScrollFilterStatusUnknownCargoButton = api.gui.comp.Button.new(linesScrollFilterStatusUnknownCargoLabel, false)
+    linesScrollFilterStatusUnknownCargoButton:onClick(function () 
+        asrGuiState.linesFilterStatus = "UnknownCargo"
+        rebuildLinesTable()
+    end)
+
+    local linesScrollFilterStatusConfiguredLabel = api.gui.comp.TextView.new("●")
+    linesScrollFilterStatusConfiguredLabel:setStyleClassList({"asrLineFilterConfigured"})
+    linesScrollFilterStatusConfiguredLabel:setTooltip("Configured lines")
+    local linesScrollFilterStatusConfiguredButton = api.gui.comp.Button.new(linesScrollFilterStatusConfiguredLabel, false)
+    linesScrollFilterStatusConfiguredButton:onClick(function () 
+        asrGuiState.linesFilterStatus = "Configured"
+        rebuildLinesTable()
+    end)
+
     local linesScrollFilterStatusMisconfiguredLabel = api.gui.comp.TextView.new("●")
     linesScrollFilterStatusMisconfiguredLabel:setStyleClassList({"asrLineFilterMisconfigured"})
     linesScrollFilterStatusMisconfiguredLabel:setTooltip("Misconfigured lines")
@@ -3931,8 +3949,10 @@ local function buildMainWindow()
 
     linesScrollHeaderLayout:addItem(linesScrollFilterStatusAllButton)
     linesScrollHeaderLayout:addItem(linesScrollFilterStatusOkButton)
+    linesScrollHeaderLayout:addItem(linesScrollFilterStatusUnknownCargoButton)
     linesScrollHeaderLayout:addItem(linesScrollFilterStatusLengthWarningButton)
     linesScrollHeaderLayout:addItem(linesScrollFilterStatusCapacityWarningButton)
+    linesScrollHeaderLayout:addItem(linesScrollFilterStatusConfiguredButton)
     linesScrollHeaderLayout:addItem(linesScrollFilterStatusMisconfiguredButton)
     linesScrollHeaderLayout:addItem(linesScrollFilterTextInput)
 
@@ -4398,6 +4418,13 @@ local function buildStatusWindow()
     statusOkValue:setId("asr.statusOkValue")
     statusTable:addRow({statusOkIcon, statusOkValue })
 
+    local statusUnknownCargoIcon = api.gui.comp.TextView.new("●")
+    statusUnknownCargoIcon:setStyleClassList({"asrLineStatusUnknownCargo"})
+    statusUnknownCargoIcon:setTooltip("Unexpected cargo warning")
+    local statusUnknownCargoValue = api.gui.comp.TextView.new(tostring(statusCounters["UnknownCargo"] and statusCounters["UnknownCargo"] or 0 ))
+    statusUnknownCargoValue:setId("asr.statusUnknownCargoWarningValue")
+    statusTable:addRow({statusUnknownCargoIcon, statusUnknownCargoValue })
+
     local statusLengthWarningIcon = api.gui.comp.TextView.new("●")
     statusLengthWarningIcon:setStyleClassList({"asrLineStatusWarning"})
     statusLengthWarningIcon:setTooltip("Length warning")
@@ -4443,6 +4470,7 @@ local function updateStatusWindow()
     local statusOkValue = api.gui.util.getById("asr.statusOkValue")
     local statusLengthWarningValue = api.gui.util.getById("asr.statusLengthWarningValue")
     local statusCapacityWarningValue = api.gui.util.getById("asr.statusCapacityWarningValue")
+    local statusUnknownCargoWarningValue = api.gui.util.getById("asr.statusUnknownCargoWarningValue")
 
     if enabledValue then
         enabledValue:setText(tostring(enabledCounter))
@@ -4459,6 +4487,10 @@ local function updateStatusWindow()
     if statusCapacityWarningValue then
         statusCapacityWarningValue:setText(tostring(statusCounters["OverCapacity"] and statusCounters["OverCapacity"] or 0 ))
     end    
+    
+    if statusUnknownCargoWarningValue then
+        statusUnknownCargoWarningValue:setText(tostring(statusCounters["UnknownCargo"] and statusCounters["UnknownCargo"] or 0 ))
+    end        
 end
 local function guiInit()
 

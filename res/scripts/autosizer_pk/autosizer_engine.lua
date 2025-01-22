@@ -49,6 +49,7 @@ local worldId
 local i18Strings =  {
     length_warning = _("length_warning"),
     capacity_warning = _("capacity_warning"),
+    unknown_cargo_warning = _("unknown_cargo_warning"),
     all_is_well = _("all_is_well"),
     status_misconfigured = _("status_misconfigured_stations"),
     status_configured = _("status_configured"),
@@ -112,69 +113,13 @@ local function storeTimings(functionName, runDuration)
     if #engineState[asrEnum.TIMINGS][functionName] >= 20 then table.remove(engineState[asrEnum.TIMINGS][functionName], 1) end
 end
 
--- local function getModelDetails(modelId)
---     local cargoCapacities = {}
---     local foundCompartments = false
---     local passengers = false
-
---     if engineState[asrEnum.MODEL_CACHE][tostring(modelId)] ~= nil then
---         return engineState[asrEnum.MODEL_CACHE][tostring(modelId)]
---     else
---         local modelDetails = api.res.modelRep.get(tonumber(modelId))
---         -- log("checking modelId: " .. modelId)
-    
---         -- find the smallest capacity per vehicle, this will be the defaul
---         local capacity = 9999
---         for i = 1, #modelDetails.metadata.transportVehicle.compartments do
---             for j = 1, #modelDetails.metadata.transportVehicle.compartments[i].loadConfigs do 
---                 for k = 1, #modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries do
---                     if string.upper(modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k].type) ~= "PASSENGERS" then
---                         cargoCapacities[string.upper(modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k].type)] = modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k].capacity
---                         -- log("model: " .. i .. ":" .. j .. ":" .. k .. " ->" )
---                         -- asrHelper.tprint(modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k])
---                         foundCompartments = true
---                         if modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k].capacity < capacity then capacity = modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k].capacity end
---                         -- log(string.upper(modelDetails.metadata.transportVehicle.compartments[i].loadConfigs[j].cargoEntries[k].type))
---                     else
---                         passengers = true
---                     end
---                 end
---             end
---         end
---         if modelDetails.metadata.railVehicle and not passengers then -- only count trains with no passenger capability
---             if not foundCompartments then
---                 engineState[asrEnum.MODEL_CACHE][tostring(modelId)] = {
---                     [asrEnum.modelCache.TYPE] = "engine", 
---                     [asrEnum.modelCache.CAPACITIES] = {},
---                     [asrEnum.modelCache.CAPACITY] = 0,
---                     [asrEnum.modelCache.LENGTH] = modelDetails.boundingInfo.bbMax.x - modelDetails.boundingInfo.bbMin.x,
---                     [asrEnum.modelCache.COMPARTMENTS] = 0,
---                 }
---             else 
---                 engineState[asrEnum.MODEL_CACHE][tostring(modelId)] = {
---                     [asrEnum.modelCache.TYPE] = "wagon",
---                     [asrEnum.modelCache.CAPACITIES] = cargoCapacities,
---                     [asrEnum.modelCache.CAPACITY] = capacity * #modelDetails.metadata.transportVehicle.compartments,
---                     [asrEnum.modelCache.LENGTH] = modelDetails.boundingInfo.bbMax.x - modelDetails.boundingInfo.bbMin.x,
---                     [asrEnum.modelCache.COMPARTMENTS] =  #modelDetails.metadata.transportVehicle.compartments
---                 }
---             end
---         else 
---             -- log("engine: not a rail vehicle")
---         end
---         -- log("engine: modelId:" .. modelId)
---         -- asrHelper.tprint(engineState[asrEnum.MODEL_CACHE][modelId])
---         return engineState[asrEnum.MODEL_CACHE][tostring(modelId)]
---     end    
--- end
-
-
 local function enableLine(lineId)
     -- log("trying to enable line " .. lineId)
 
     if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "Configured"  or 
         engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "OK" or
         engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "OverCapacity" or 
+        engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "UnknownCargo" or 
         engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "Warning" then 
 
         engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ENABLED] = true
@@ -1424,7 +1369,19 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
 
     if engineState[asrEnum.LINES] and engineState[asrEnum.LINES][tostring(lineId)] and engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS] and engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1] then
 
+        log("engine: train " .. getTrainName(trainId) .. " lineId: " .. lineId)
+
+        local lineName = api.engine.getComponent(tonumber(lineId), api.type.ComponentType.NAME)
+        if lineName and lineName.name then 
+            log("engine: train " .. getTrainName(trainId) .. " line name: " .. lineName.name)
+        end
         local stationConfig = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1] 
+
+        local stationName = api.engine.getComponent(stationConfig[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME)
+        if stationName and stationName.name then
+            log("engine: train " .. getTrainName(trainId) .. " station name: " .. stationName.name)
+        end
+        
         local cargoAmounts = stationConfig[asrEnum.station.CARGO_AMOUNTS] 
         local travelTime = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAVEL_TIME]
 
@@ -1560,6 +1517,28 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
             end
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING] = false
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CAPACITY_WARNING_COUNT] = nil
+        end
+
+        -- check if there's some unexpected cargo waiting 
+        local unknownCargoFound = false
+        engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.UNKNOWN_CARGO_WARNING_CARGOS] = nil
+        for cargoId in pairs(waitingCargoCounter) do
+            if not cargoStatus[tostring(cargoId)] then
+                -- found cargo that we don't know about
+                unknownCargoFound = true
+                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.UNKNOWN_CARGO_WARNING] = true
+                if not engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.UNKNOWN_CARGO_WARNING_CARGOS] then 
+                    engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.UNKNOWN_CARGO_WARNING_CARGOS] = {}
+                end
+                if not asrHelper.inTable(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.UNKNOWN_CARGO_WARNING_CARGOS], tostring(cargoId)) then
+                    table.insert(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.UNKNOWN_CARGO_WARNING_CARGOS], tostring(cargoId))
+                    log("engine: train " .. getTrainName(trainId) .. " picking up unexpected cargo at stop index: " .. stopIndex  .. ", cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]))
+                end
+            end
+        end
+        if not unknownCargoFound then
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.UNKNOWN_CARGO_WARNING_CARGOS] = nil
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.UNKNOWN_CARGO_WARNING] = false
         end
 
         -- log("engine: train " .. getTrainName(trainId) .. " cargo status 1: ")
@@ -1897,24 +1876,38 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
             end
         end
 
-        if lengthWarning then 
-            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Warning"
-            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = lengthWarningMessage
-        else
-            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "Warning" then
-                 engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "OK"
-                 engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = i18Strings.all_is_well
+        local unknownCargoWarning = false
+        local unknownCargoWarningMessage = i18Strings.unknown_cargo_warning
+        for _, stationDetails in pairs(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS]) do
+            if stationDetails[asrEnum.station.UNKNOWN_CARGO_WARNING] then
+                local stationName = api.engine.getComponent(stationDetails[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME)
+                if stationName and stationName.name then
+                    unknownCargoWarningMessage = unknownCargoWarningMessage .. "\n" .. stationName.name
+                    if stationDetails[asrEnum.station.UNKNOWN_CARGO_WARNING_CARGOS] then
+                        unknownCargoWarningMessage = unknownCargoWarningMessage .. " ("
+                        for _, cargoId in pairs(stationDetails[asrEnum.station.UNKNOWN_CARGO_WARNING_CARGOS]) do
+                            unknownCargoWarningMessage = unknownCargoWarningMessage .. string.upper(cargoTypes[tonumber(cargoId)]) .. " "
+                        end
+                        unknownCargoWarningMessage = string.sub(unknownCargoWarningMessage, 1, -2)
+                        unknownCargoWarningMessage = unknownCargoWarningMessage .. ")"
+                    end
+                end
+                unknownCargoWarning = true
             end
         end
 
         if capacityWarning then 
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "OverCapacity"
             engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = capacityWarningMessage
+        elseif lengthWarning then
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "Warning"
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = lengthWarningMessage
+        elseif unknownCargoWarning then
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "UnknownCargo"
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = unknownCargoWarningMessage
         else
-            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] == "OverCapacity" then
-                 engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "OK"
-                 engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = i18Strings.all_is_well
-            end
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS] = "OK"
+            engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATUS_MESSAGE] = i18Strings.all_is_well
         end
 
         if engineState[asrEnum.STATUS][asrEnum.status.TIMINGS_ENABLED] then storeTimings("generateTrainConfigForMultipleCargos", math.ceil((os.clock() - startTime)*1000000)/1000) end

@@ -77,7 +77,9 @@ asrEnum.station.CAPACITY_WARNING                = 23
 asrEnum.station.CARGO_AMOUNTS                   = 24
 asrEnum.station.LENGTH_WARNING_COUNT            = 25
 asrEnum.station.CAPACITY_WARNING_COUNT          = 26
-
+asrEnum.station.UNKNOWN_CARGO_WARNING           = 27
+asrEnum.station.CAPCITY_WARNING_CARGOS          = 28
+asrEnum.station.UNKNOWN_CARGO_WARNING_CARGOS    = 29
 
 -- LINE VEHICLES
 asrEnum.vehicle                                 = {}
