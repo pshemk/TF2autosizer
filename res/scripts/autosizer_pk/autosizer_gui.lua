@@ -106,6 +106,8 @@ local i18Strings =  {
     status_miconfigured_wagons = _("status_miconfigured_wagons"),
     supplier = _("supplier"),
     tracked = _("tracked"),
+    tracking_delay = _("tracking_delay"),
+    tracking_delay_tip = _("tracking_delay_tip"),
     train_length = _("train_length"),
     trains = _("trains"),
     unloading = _("unloading"),
@@ -1516,7 +1518,7 @@ local function rebuildLineSettingsLayout()
 
     
                 -- train list
-                local trainListTable = api.gui.comp.Table.new(3, 'NONE')
+                local trainListTable = api.gui.comp.Table.new(4, 'NONE')
                 trainListTable:setColWidth(0, asrGuiDimensions.lineSettingsTrainsTable.columns[1])
                 trainListTable:setColWidth(1, asrGuiDimensions.lineSettingsTrainsTable.columns[2])
                 trainListTable:setColWidth(2, asrGuiDimensions.lineSettingsTrainsTable.columns[3])
@@ -1534,7 +1536,9 @@ local function rebuildLineSettingsLayout()
                         local trainTracked = false
                         local trainStatus
                         local trainDepartureTime = ""
-                        if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then 
+                        local trainLength = ""
+                        if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] and 
+                            asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRACKING_ENABLED] then 
                             trainTracked = true 
 
                             if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IN_STATION] then
@@ -1557,6 +1561,10 @@ local function rebuildLineSettingsLayout()
                                     end
                                 end
                             end                       
+                        end
+                        if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] and 
+                            asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRAIN_LENGTH] then                         
+                            trainLength = math.floor(asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRAIN_LENGTH]) .. "m"
                         end
 
                         local trainStatusLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
@@ -1610,6 +1618,7 @@ local function rebuildLineSettingsLayout()
                             api.gui.comp.TextView.new(trainName),
                             trainStatusWrapper,
                             api.gui.comp.TextView.new(trainDepartureTime),
+                            api.gui.comp.TextView.new(trainLength)
                         })
                     end
                 end
@@ -1723,7 +1732,10 @@ local function rebuildLineSettingsLayout()
                         local trainTracked = false
                         local trainStatus
                         local trainDepartureTime = ""
-                        if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then 
+                        local trainLength = ""
+                        if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] and 
+                            asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRACKING_ENABLED] then 
+
                             trainTracked = true 
                             if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IN_STATION] then
                                 if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TIME_UNTIL_LOAD] > 0 then
@@ -1745,6 +1757,11 @@ local function rebuildLineSettingsLayout()
                                     end
                                 end
                             end                       
+                        end
+
+                        if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] and 
+                            asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRAIN_LENGTH] then                         
+                            trainLength = math.floor(asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRAIN_LENGTH]) .. "m"
                         end
 
                         local trainStatusLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
@@ -1798,6 +1815,7 @@ local function rebuildLineSettingsLayout()
                             api.gui.comp.TextView.new(trainName),
                             trainStatusWrapper,
                             api.gui.comp.TextView.new(trainDepartureTime),
+                            api.gui.comp.TextView.new(trainLength),
                         })
                     end
                 end
@@ -2247,7 +2265,17 @@ local function getTimings()
 
         end
         if asrState[asrEnum.TRACKED_TRAINS] then
-            timingsTable:addRow({api.gui.comp.TextView.new("Tracked trains"), api.gui.comp.TextView.new(tostring( asrHelper.getTableLength(asrState[asrEnum.TRACKED_TRAINS]))),api.gui.comp.TextView.new("") })
+            local trainCount = 0
+            local delayedCount = 0
+            for _, trackedTrainDetails in pairs(asrState[asrEnum.TRACKED_TRAINS]) do
+                if trackedTrainDetails[asrEnum.trackedTrain.TRACKING_ENABLED] then
+                    trainCount = trainCount + 1
+                elseif trackedTrainDetails[asrEnum.trackedTrain.TRACKING_START_TIMESTAMP] then
+                    delayedCount = delayedCount + 1
+                end
+              end
+            timingsTable:addRow({api.gui.comp.TextView.new("Tracked trains (live)"), api.gui.comp.TextView.new(tostring(trainCount)),api.gui.comp.TextView.new("") })
+            timingsTable:addRow({api.gui.comp.TextView.new("Tracked trains (not started)"), api.gui.comp.TextView.new(tostring(delayedCount)),api.gui.comp.TextView.new("") })
         end
     end
 end
@@ -4056,6 +4084,7 @@ local function buildMainWindow()
         asrState[asrEnum.SETTINGS][asrEnum.settings.ENABLE_TRAIN_PURCHASE] = false
         asrState[asrEnum.SETTINGS][asrEnum.settings.TRAIN_LENGTH] = 160
         asrState[asrEnum.SETTINGS][asrEnum.settings.MINIMAL_WAGON_COUNT] = 1
+        asrState[asrEnum.SETTINGS][asrEnum.settings.TRACKING_DELAY] = 75
     end
 
     local gloalMinimalTrainSizeLabel = api.gui.comp.TextView.new(i18Strings.minimal_train_wagon_count)
@@ -4133,6 +4162,30 @@ local function buildMainWindow()
     trainLengthLayout:addItem(trainLengthTextInput)
     trainLengthLayout:addItem(api.gui.comp.TextView.new("m"))
     settingsTable:addRow({trainLengthLabel, trainLengthWrapper, MinimalTrainSizeFiller})
+
+    local trackingDelayLabel = api.gui.comp.TextView.new(i18Strings.tracking_delay)
+    trackingDelayLabel:setTooltip(i18Strings.tracking_delay_tip)
+    local trackingDelayValue = api.gui.comp.TextView.new("")
+    trackingDelayValue:setMinimumSize(api.gui.util.Size.new(30, 20))
+    local trackingDelaySlider = api.gui.comp.Slider.new(true)
+    if asrState[asrEnum.SETTINGS] ~= nil then
+        if not asrState[asrEnum.SETTINGS][asrEnum.settings.TRACKING_DELAY] then 
+            asrState[asrEnum.SETTINGS][asrEnum.settings.TRACKING_DELAY] = 75
+        end
+        trackingDelaySlider:setDefaultValue(asrState[asrEnum.SETTINGS][asrEnum.settings.TRACKING_DELAY]/5)
+        trackingDelaySlider:setValue(asrState[asrEnum.SETTINGS][asrEnum.settings.TRACKING_DELAY]/5, false)
+        trackingDelayValue:setText(tostring(asrState[asrEnum.SETTINGS][asrEnum.settings.TRACKING_DELAY]) .. "%")
+    end
+    trackingDelaySlider:setMaximum(16)
+    trackingDelaySlider:setMinimum(0)
+    trackingDelaySlider:setMinimumSize(api.gui.util.Size.new(150, 20))
+    trackingDelaySlider:onValueChanged(function (value) 
+        sendEngineCommand("asrSettings", {property = asrEnum.settings.TRACKING_DELAY, value = tonumber(value*5)})
+        trackingDelayValue:setText(tostring(tonumber(value*5)) .. "%")
+    end)
+    
+    settingsTable:addRow({trackingDelayLabel,  trackingDelayValue, trackingDelaySlider})
+
 
     local enableSchedulerLabel = api.gui.comp.TextView.new(i18Strings.enable_scheduler)
     local enableSchedulerCheckBox = api.gui.comp.CheckBox.new("", "ui/checkbox0.tga", "ui/checkbox1.tga" )

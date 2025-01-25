@@ -162,6 +162,7 @@ asrEnum.settings.MINIMAL_WAGON_COUNT            = 4
 asrEnum.settings.SCHEDULER_ENABLED              = 5
 asrEnum.settings.TRAIN_DETAILS_ENABLED          = 6
 asrEnum.settings.STATUS_WINDOW                  = 7
+asrEnum.settings.TRACKING_DELAY                 = 8
 
 -- TRACKED TRAINS
 asrEnum.trackedTrain                            = {}
@@ -169,7 +170,7 @@ asrEnum.trackedTrain.IN_STATION                 = 1
 asrEnum.trackedTrain.ARRIVAL_TIMESTAMP          = 2
 asrEnum.trackedTrain.TIME_UNTIL_LOAD            = 3
 asrEnum.trackedTrain.REPLACED                   = 4
-asrEnum.trackedTrain.DELETE_ON_EXIT             = 5
+asrEnum.trackedTrain.STOP_TRACKING_ON_EXIT      = 5
 asrEnum.trackedTrain.STATE                      = 6
 asrEnum.trackedTrain.STOP_INDEX                 = 7
 asrEnum.trackedTrain.DEPARTURE_TIMESTAMP        = 8
@@ -181,6 +182,9 @@ asrEnum.trackedTrain.IS_STOPPED                 = 13
 asrEnum.trackedTrain.WAGON_COUNT                = 14
 asrEnum.trackedTrain.WAIT_START_TIMESTAMP       = 15
 asrEnum.trackedTrain.WAIT_DURATION              = 16
+asrEnum.trackedTrain.TRACKING_ENABLED           = 17
+asrEnum.trackedTrain.TRAIN_LENGTH               = 18
+asrEnum.trackedTrain.TRACKING_START_TIMESTAMP   = 19
 
 
 -- CONSUMER TYPES
