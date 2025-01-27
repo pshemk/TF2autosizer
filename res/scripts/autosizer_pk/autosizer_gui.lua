@@ -2267,15 +2267,20 @@ local function getTimings()
         if asrState[asrEnum.TRACKED_TRAINS] then
             local trainCount = 0
             local delayedCount = 0
+            local otherCount = 0
             for _, trackedTrainDetails in pairs(asrState[asrEnum.TRACKED_TRAINS]) do
                 if trackedTrainDetails[asrEnum.trackedTrain.TRACKING_ENABLED] then
                     trainCount = trainCount + 1
                 elseif trackedTrainDetails[asrEnum.trackedTrain.TRACKING_START_TIMESTAMP] then
                     delayedCount = delayedCount + 1
+                else
+                    otherCount = otherCount + 1
                 end
               end
-            timingsTable:addRow({api.gui.comp.TextView.new("Tracked trains (live)"), api.gui.comp.TextView.new(tostring(trainCount)),api.gui.comp.TextView.new("") })
-            timingsTable:addRow({api.gui.comp.TextView.new("Tracked trains (not started)"), api.gui.comp.TextView.new(tostring(delayedCount)),api.gui.comp.TextView.new("") })
+            timingsTable:addRow({api.gui.comp.TextView.new(""), api.gui.comp.TextView.new(""), api.gui.comp.TextView.new("") })              
+            timingsTable:addRow({api.gui.comp.TextView.new("Trains (currently tracked"), api.gui.comp.TextView.new(tostring(trainCount)),api.gui.comp.TextView.new("") })
+            timingsTable:addRow({api.gui.comp.TextView.new("Trains (waiting to be tracked)"), api.gui.comp.TextView.new(tostring(delayedCount)),api.gui.comp.TextView.new("") })
+            timingsTable:addRow({api.gui.comp.TextView.new("Trains (not currently tracked)"), api.gui.comp.TextView.new(tostring(otherCount)),api.gui.comp.TextView.new("") })
         end
     end
 end

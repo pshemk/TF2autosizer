@@ -2667,7 +2667,7 @@ local function checkTrainsPositions()
 
 
                 -- check if the stopped train should be started again
-                if trainPrevInfo[asrEnum.trackedTrain.IS_STOPPED] then
+                if trainCurrentInfo and trainPrevInfo[asrEnum.trackedTrain.IS_STOPPED] then
                     -- calculate departure time again, just in case
                     local departureTime
                     if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] and 
