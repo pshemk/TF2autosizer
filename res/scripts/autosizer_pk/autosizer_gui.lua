@@ -107,6 +107,7 @@ local i18Strings =  {
     supplier = _("supplier"),
     tracked = _("tracked"),
     tracking_delay = _("tracking_delay"),
+    tracking_delayed = _("tracking_delayed"),
     tracking_delay_tip = _("tracking_delay_tip"),
     train_length = _("train_length"),
     trains = _("trains"),
@@ -1533,13 +1534,13 @@ local function rebuildLineSettingsLayout()
 
                         table.insert(trainNames, { name = trainName })
 
-                        local trainTracked = false
+                        local trainTracked = "no"
                         local trainStatus
                         local trainDepartureTime = ""
                         local trainLength = ""
                         if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] and 
                             asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRACKING_ENABLED] then 
-                            trainTracked = true 
+                            trainTracked = "yes"
 
                             if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IN_STATION] then
                                 if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TIME_UNTIL_LOAD] > 0 then
@@ -1561,7 +1562,11 @@ local function rebuildLineSettingsLayout()
                                     end
                                 end
                             end                       
+                        elseif asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] and 
+                            asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRACKING_START_TIMESTAMP] then 
+                            trainTracked = "delayed"
                         end
+
                         if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] and 
                             asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRAIN_LENGTH] then                         
                             trainLength = math.floor(asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRAIN_LENGTH]) .. "m"
@@ -1576,16 +1581,23 @@ local function rebuildLineSettingsLayout()
 
                         local iconSize = api.gui.util.Size.new(12, 12)
 
-                        if trainTracked then
+                        if trainTracked == "yes" then
                             trainTrackedIcon = api.gui.comp.ImageView.new("ui/icons/build-control/accept@2x.tga")
                             trainTrackedIcon:setTooltip(i18Strings.tracked)
-    
+                            trainTrackedIcon:setMinimumSize(iconSize)
+                            trainTrackedIcon:setMaximumSize(iconSize)    
+                        elseif trainTracked == "delayed" then
+                            trainTrackedIcon = api.gui.comp.ImageView.new("ui/icons/game-menu/speed@2x.tga")
+                            trainTrackedIcon:setMinimumSize(api.gui.util.Size.new(19, 19))
+                            trainTrackedIcon:setMaximumSize(api.gui.util.Size.new(19, 19))    
+                            trainTrackedIcon:setStyleClassList({"asrClockIcon"})
+                            trainTrackedIcon:setTooltip(i18Strings.tracking_delayed)
                         else
                             trainTrackedIcon = api.gui.comp.ImageView.new("ui/icons/build-control/cancel@2x.tga")
                             trainTrackedIcon:setTooltip(i18Strings.not_tracked)
+                            trainTrackedIcon:setMinimumSize(iconSize)
+                            trainTrackedIcon:setMaximumSize(iconSize)    
                         end
-                        trainTrackedIcon:setMinimumSize(iconSize)
-                        trainTrackedIcon:setMaximumSize(iconSize)
                         trainStatusLayout:addItem(trainTrackedIcon)
 
 
@@ -1608,6 +1620,7 @@ local function rebuildLineSettingsLayout()
                             trainStatusIcon = api.gui.comp.ImageView.new("ui/icons/game-menu/speed@2x.tga")
                             trainStatusIcon:setMinimumSize(api.gui.util.Size.new(19, 19))
                             trainStatusIcon:setMaximumSize(api.gui.util.Size.new(19, 19))    
+                            trainTrackedIcon:setStyleClassList({"asrClockIcon"})                            
                             trainStatusIcon:setTooltip(i18Strings.waiting)
                         else
                             trainStatusIcon = api.gui.comp.ImageView.new("ui/empty15.tga")
@@ -1729,14 +1742,14 @@ local function rebuildLineSettingsLayout()
 
                         table.insert(trainNames, { name = trainName })
 
-                        local trainTracked = false
+                        local trainTracked = "no"
                         local trainStatus
                         local trainDepartureTime = ""
                         local trainLength = ""
                         if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] and 
                             asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRACKING_ENABLED] then 
 
-                            trainTracked = true 
+                            trainTracked = "yes"
                             if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IN_STATION] then
                                 if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TIME_UNTIL_LOAD] > 0 then
                                     trainStatus = "unloading"
@@ -1757,6 +1770,10 @@ local function rebuildLineSettingsLayout()
                                     end
                                 end
                             end                       
+                        elseif asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] and 
+                            asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRACKING_START_TIMESTAMP] then 
+                                trainTracked = "delayed"
+
                         end
 
                         if asrState[asrEnum.TRACKED_TRAINS][tostring(trainId)] and 
@@ -1773,16 +1790,22 @@ local function rebuildLineSettingsLayout()
 
                         local iconSize = api.gui.util.Size.new(12, 12)
 
-                        if trainTracked then
+                        if trainTracked == "yes" then
                             trainTrackedIcon = api.gui.comp.ImageView.new("ui/icons/build-control/accept@2x.tga")
+                            trainTrackedIcon:setMinimumSize(iconSize)
+                            trainTrackedIcon:setMaximumSize(iconSize)    
                             trainTrackedIcon:setTooltip(i18Strings.tracked)
-    
+                        elseif trainTracked == "delayed" then
+                            trainTrackedIcon = api.gui.comp.ImageView.new("ui/icons/game-menu/speed@2x.tga")
+                            trainTrackedIcon:setMinimumSize(api.gui.util.Size.new(19, 19))
+                            trainTrackedIcon:setMaximumSize(api.gui.util.Size.new(19, 19))    
+                            trainTrackedIcon:setTooltip(i18Strings.tracking_delayed)
                         else
                             trainTrackedIcon = api.gui.comp.ImageView.new("ui/icons/build-control/cancel@2x.tga")
+                            trainTrackedIcon:setMinimumSize(iconSize)
+                            trainTrackedIcon:setMaximumSize(iconSize)    
                             trainTrackedIcon:setTooltip(i18Strings.not_tracked)
                         end
-                        trainTrackedIcon:setMinimumSize(iconSize)
-                        trainTrackedIcon:setMaximumSize(iconSize)
                         trainStatusLayout:addItem(trainTrackedIcon)
 
 

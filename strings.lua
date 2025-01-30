@@ -77,6 +77,7 @@ If you like my mod [url=https://buymeacoffee.com/peteraklnz]buy me a coffee :-) 
             trains = "Trains",
             tracked = "Train is being tracked",
             tracking_delay = "Tracking delay",
+            tracking_delayed = "Train will be tracked later in the trip",
             tracking_delay_tip = "Percentage of the trip after which train starts to be tracked.\nIf there's a lot of variation in duration of the same trip\nthis number should be lowered to 50%",
             unknown_cargo_warning = "Unexpected cargo found at:",
             unloading = "Unloading",

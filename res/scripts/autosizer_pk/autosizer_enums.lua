@@ -101,9 +101,10 @@ asrEnum.lineIndustry.TYPE                       = 3
 asrEnum.modelCache                              = {}
 asrEnum.modelCache.CAPACITY                     = 1
 asrEnum.modelCache.CAPACITIES                   = 2
-asrEnum.modelCache.COMPARTMENTS                 = 3
+asrEnum.modelCache.COMPARTMENTS_COUNT           = 3
 asrEnum.modelCache.LENGTH                       = 4
 asrEnum.modelCache.TYPE                         = 5
+asrEnum.modelCache.USES_COMPARTMENTS            = 6
 
 -- INDUSTRY
 asrEnum.industry                                = {}

@@ -187,6 +187,12 @@ function data()
     padding = {0, 0, 0 ,0},
   })
 
+  a("!asrClockIcon", {
+    color = {1, 1, 0, 1},
+    padding = {0, 0, 10, 0},
+    margin = {0, 0, 10, 0},
+  })
+
 
   return result
 end
