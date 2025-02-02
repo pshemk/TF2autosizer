@@ -2510,8 +2510,11 @@ local function checkTrainsPositions()
                     end
 
                     -- check if scheduler is enabled for this station
-                    if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.SCHEDULER_ENABLED] and 
-                        engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] and #engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] > 1 then
+                    if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)] and 
+                       engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS] and
+                       engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1] and 
+                       engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.SCHEDULER_ENABLED] and 
+                       engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] and #engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] > 1 then
                         if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] then
                             if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] and engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME] then 
                                 -- local stationDwellTime = 10
