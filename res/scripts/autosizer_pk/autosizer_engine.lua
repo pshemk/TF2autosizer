@@ -1438,6 +1438,7 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
                 end
             end
         end
+
         -- for each cargo type - identify how much capacity we need
         for cargoId, cargoAmount in pairs(cargoAmounts) do
             -- get wagon models for the cargo and see if the train has enough wagons
@@ -1620,6 +1621,24 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
             end
         end
 
+        -- get cargo currently onboard of the train
+        local cargoOnBoardAllTrains = api.engine.system.simEntityAtVehicleSystem.getVehicle2Cargo2SimEntitesMap()
+        local cargoOnBoard = {}
+        if cargoOnBoardAllTrains[tonumber(trainId)] then
+            cargoOnBoard = cargoOnBoardAllTrains[tonumber(trainId)]
+        end
+
+        -- make sure that required capacity covers cargo alrady onboard - if not increase the requirement to match it
+        for cargoId, cargoList in pairs(cargoOnBoard) do
+            if #cargoList > 0 then 
+                if cargoStatus[tostring(cargoId)] and cargoStatus[tostring(cargoId)].requiredCapacity and #cargoList > cargoStatus[tostring(cargoId)].requiredCapacity then
+                    print("asrEngine: train " .. getTrainName(trainId) .. " onboard cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " amount: " .. #cargoList .. " currently required: " .. cargoStatus[tostring(cargoId)].requiredCapacity .. " increasing to match it")
+                    cargoStatus[tostring(cargoId)].requiredCapacity = #cargoList
+                end
+            end
+        end
+        
+        
         -- log("asrEngine: train " .. getTrainName(trainId) .. " cargo status 3: ")
         -- asrHelper.tprint(cargoStatus)
 
@@ -1627,15 +1646,18 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
         math.randomseed(os.time())  -- seed the generator
 
         -- generate the config, cargo by cargo
+        local additionsOnly = true
         for cargoId, cargoStatusDetails in pairs(cargoStatus) do
             if cargoStatusDetails.currentCapacity > cargoStatusDetails.requiredCapacity and cargoStatusDetails.currentCapacity <  cargoStatusDetails.requiredCapacity + cargoStatusDetails.maxWagonCapacity then
                 log("asrEngine: train " .. getTrainName(trainId) .. " cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " reusing previous config, wagons found: " .. cargoStatusDetails.wagonsFound)
             elseif cargoStatusDetails.currentCapacity > cargoStatusDetails.requiredCapacity + cargoStatusDetails.maxWagonCapacity then
                 log("asrEngine: train " .. getTrainName(trainId) .. " cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " reducing from current: " .. cargoStatusDetails.currentCapacity .. " to required: " .. cargoStatusDetails.requiredCapacity .. ", wagons found: " .. cargoStatusDetails.wagonsFound .. " capacity: " .. cargoStatusDetails.maxWagonCapacity)
+                additionsOnly = false
             elseif cargoStatusDetails.currentCapacity < cargoStatusDetails.requiredCapacity then
                 log("asrEngine: train " .. getTrainName(trainId) .. " cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " inceasing from current: " .. cargoStatusDetails.currentCapacity .. " to required: " .. cargoStatusDetails.requiredCapacity .. ", wagons found: " .. cargoStatusDetails.wagonsFound .. " capacity: " .. cargoStatusDetails.maxWagonCapacity)
             elseif cargoStatusDetails.requiredCapacity == 0 then
                 log("asrEngine: train " .. getTrainName(trainId) .. " cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " reducing from current: " .. cargoStatusDetails.currentCapacity .. " to none")
+                additionsOnly = false
             end
 
             local addedCapacity = 0            
@@ -1798,7 +1820,7 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
         if requiredWagonCount == 0 then
             stage = "departure"
         else
-            if currentWagonCount == 0 then
+            if currentWagonCount == 0 or additionsOnly then
                 stage = "arrival"
             else
                 stage = "unload"
@@ -2355,6 +2377,8 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
             -- check the total capcity of all wagons 
             local currentCapacity = 0
 
+
+            print("asrEngine: train " .. getTrainName(trainId) .. " checking capacities")
             local currentWagonCount = 0
             local currentEngineCount = 0
             for _, vehicle in pairs(trainVehicles) do
@@ -2363,21 +2387,6 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
                 end 
                 if engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)][asrEnum.modelCache.TYPE] == "engine" then currentEngineCount = currentEngineCount + 1 end
                 if engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)][asrEnum.modelCache.TYPE] == "wagon" then currentWagonCount = currentWagonCount + 1 end
-            end
-
-            -- if additional cargo pickup is enabled the train must be tracked
-            if stationConfig[asrEnum.station.WAITING_CARGO_ENABLED] == true then 
-                return true, currentWagonCount
-            end
-
-            -- if scheduled departuers are enabled - track the train
-            if stationConfig[asrEnum.station.SCHEDULER_ENABLED] == true then 
-                return true, currentWagonCount
-            end
-
-            -- if the line is set to "always track" (due to engine-only trains)
-            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ALWAYS_TRACK] == true then 
-                return true, currentWagonCount
             end
         
             local capacityScaleFactor = 1
@@ -2422,6 +2431,7 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
                 end
 
                 local adjustmentNeeded = false
+                local additionsOnly = true
                 for cargoId, cargoAmount in pairs(stationConfig[asrEnum.station.CARGO_AMOUNTS]) do
                     -- get wagon models for the cargo and see if the train has enough compartments
                     -- print("asrEngine: train " .. getTrainName(trainId) .. " cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " checking capacity")                    
@@ -2471,7 +2481,10 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
                         else
                             print("asrEngine: train " .. getTrainName(trainId) .. " cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " capacity must be adjusted, current: " .. currentCapacity .. " required: " .. requiredCapacity .. " wagon capacity: " .. maxWagonCapacity) 
                             adjustmentNeeded = true
-                        end                   
+                        end                
+                        if not (requiredCapacity > currentCapacity) then
+                            additionsOnly = false 
+                        end
                     else
                         print("asrEngine: train " .. getTrainName(trainId) .. " no cargo map, cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]))   
                     end
@@ -2479,6 +2492,27 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
 
                 -- print("asrEngine: train " .. getTrainName(trainId) .. " compartment map: ")
                 -- asrHelper.tprint(trainCompartmentsUsed)
+
+                -- if we're only adding wagons - pretend the nubmer is 0 to trigger upgrade on arrival
+                if additionsOnly then
+                    currentWagonCount = 0
+                    print("asrEngine: train " .. getTrainName(trainId) .. " will be increasing capacity")   
+                end
+
+                -- if additional cargo pickup is enabled the train must be tracked
+                if stationConfig[asrEnum.station.WAITING_CARGO_ENABLED] == true then 
+                    return true, currentWagonCount
+                end
+
+                -- if scheduled departuers are enabled - track the train
+                if stationConfig[asrEnum.station.SCHEDULER_ENABLED] == true then 
+                    return true, currentWagonCount
+                end
+
+                -- if the line is set to "always track" (due to engine-only trains)
+                if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ALWAYS_TRACK] == true then 
+                    return true, currentWagonCount
+                end
 
                 -- check if we have any unclaimed compartments
                 local spareWagonCount = 0
@@ -2551,6 +2585,9 @@ local function checkTrainsCapacity(runInForeground)
                                     if not engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRACKING_START_TIMESTAMP] and 
                                        not engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRACKING_ENABLED] then 
 
+                                        if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRACKING_START_TIMESTAMP] then
+                                            log("asrEngine: train " .. getTrainName(trainId) .. " missed replacement at the previous stop")    
+                                        end
                                         local stopNumber = trainInfo.stopIndex + 1
 
                                         local previousStopNumber = stopNumber - 1
@@ -2567,8 +2604,9 @@ local function checkTrainsCapacity(runInForeground)
                                             trackingDelaySetting = 0.75
                                         end
                                         local trackingDelay = thisSectionTime * trackingDelaySetting - (getGameTime() - previousStopDepartureTime)
+                                        if trackingDelay < 0 then trackingDelay = 0 end
                                         
-                                        log("asrEngine: train " .. getTrainName(trainId) .. " will start to track in " .. trackingDelay .. "s " .. " departed: " .. (getGameTime() - previousStopDepartureTime) .. "s ago, this section: " .. thisSectionTime .. "s, current: " .. getGameTime())
+                                        log("asrEngine: train " .. getTrainName(trainId) .. " will start to track in " .. trackingDelay .. "s")
                                         if previousStopDepartureTime + trackingDelay < getGameTime() then 
                                             log("asrEngine: train " .. getTrainName(trainId) .. " starting to track now")
                                             engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRACKING_ENABLED] = true
@@ -2736,7 +2774,7 @@ local function checkTrainsPositions()
                             if departureTime > getGameTime() and not trainPrevInfo[asrEnum.trackedTrain.IS_STOPPED] then
                                 local stopCmd = api.cmd.make.setUserStopped(tonumber(trainId), true)
                                 api.cmd.sendCommand(stopCmd, function ()
-                                    log ("asrEngine: train " .. getTrainName(trainId) .. " is waiting  at " .. trainCurrentInfo.timeUntilLoad)
+                                    log ("asrEngine: train " .. getTrainName(trainId) .. " is waiting  at index " .. trainCurrentInfo.stopIndex .. " (until load: " ..  trainCurrentInfo.timeUntilLoad)
                                     engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IS_STOPPED] = true
                                     engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.WAIT_START_TIMESTAMP] = getGameTime()
                                 end)
@@ -2752,7 +2790,8 @@ local function checkTrainsPositions()
                                 trainConfigCache[tostring(trainId)] = replacementConfig
                             end
 
-                            if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACE_ON] == "unload" then 
+                            if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACE_ON] == "unload" or 
+                                engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACE_ON] == "arrival" then -- the generation might be late
                                 if not trainConfigCache[tostring(trainId)] then 
                                     log("asrEngine: train " .. getTrainName(trainId) .. " regenerating train config (unload at " .. trainCurrentInfo.timeUntilLoad .. ", trainId: " ..  trainId .. ")")
                                     trainConfigCache[tostring(trainId)] = generateTrainConfig(trainId, trainCurrentInfo.line, trainCurrentInfo.stopIndex)
@@ -2802,7 +2841,8 @@ local function checkTrainsPositions()
                             trainConfigCache[tostring(trainId)] = replacementConfig
                         end
 
-                        if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACE_ON] == "unload" then 
+                        if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACE_ON] == "unload" or 
+                           engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.REPLACE_ON] == "arrival" then 
                             local replaceCmd = api.cmd.make.replaceVehicle(tonumber(trainId), trainConfigCache[tostring(trainId)])
                             api.cmd.sendCommand(replaceCmd, function () 
                                 log ("asrEngine: train " .. getTrainName(trainId) .. " replace sent on restart/unload, currently at stop " .. trainCurrentInfo.stopIndex)
@@ -2831,7 +2871,7 @@ local function checkTrainsPositions()
                 if trainCurrentInfo and trainCurrentInfo.state == api.type.enum.TransportVehicleState.EN_ROUTE and trainPrevInfo[asrEnum.trackedTrain.STATE] == api.type.enum.TransportVehicleState.AT_TERMINAL then
                     log("asrEngine: train " .. getTrainName(trainId) .. " is leaving the station " .. " heading to index: " .. trainCurrentInfo.stopIndex )
                     engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.DEPARTURE_TIMESTAMP] = getGameTime()
-                    log("asrEngine: train " .. getTrainName(trainId) .. " departure timestamp: " .. getGameTime())
+                    -- log("asrEngine: train " .. getTrainName(trainId) .. " departure timestamp: " .. getGameTime())
 
                     if trainPrevInfo[asrEnum.trackedTrain.REPLACE_ON] == "departure" and not trainPrevInfo[asrEnum.trackedTrain.REPLACED]  then 
                         if not trainConfigCache[tostring(trainId)] then
@@ -2909,8 +2949,14 @@ local function checkTrainsPositions()
                 if trainCurrentInfo and trainCurrentInfo.state == api.type.enum.TransportVehicleState.EN_ROUTE and 
                     trainPrevInfo[asrEnum.trackedTrain.IN_STATION] and not trainPrevInfo[asrEnum.trackedTrain.STOP_TRACKING_ON_EXIT] and engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then
                     log("asrEngine: train " .. getTrainName(trainId) .. " tracking state error, correcting")
+                    if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRACKING_START_TIMESTAMP] then
+                        log("asrEngine: train " .. getTrainName(trainId) .. " most likely missed replacement at the previous enabled stop")    
+                    end
                     engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] = 
                     {
+                        [asrEnum.trackedTrain.TRACKING_ENABLED] = false,
+                        [asrEnum.trackedTrain.DEPARTURE_TIMESTAMP] = trainPrevInfo[asrEnum.trackedTrain.DEPARTURE_TIMESTAMP] and trainPrevInfo[asrEnum.trackedTrain.DEPARTURE_TIMESTAMP] or  getGameTime(),
+                        [asrEnum.trackedTrain.TRAIN_LENGTH] = trainPrevInfo[asrEnum.trackedTrain.TRAIN_LENGTH] and trainPrevInfo[asrEnum.trackedTrain.TRAIN_LENGTH] or nil,
                         [asrEnum.trackedTrain.TIME_UNTIL_LOAD] = trainPrevInfo[asrEnum.trackedTrain.TIME_UNTIL_LOAD],
                         [asrEnum.trackedTrain.STATE] = trainPrevInfo[asrEnum.trackedTrain.STATE],
                         [asrEnum.trackedTrain.WAGON_COUNT] = trainPrevInfo[asrEnum.trackedTrain.WAGON_COUNT],
@@ -3546,7 +3592,7 @@ function asrEngine.update()
             if flags.initDone and engineState[asrEnum.UPDATE_TIMESTAMP] ~= nil and tonumber(asrHelper.getUniqueTimestamp()) -  tonumber(engineState[asrEnum.UPDATE_TIMESTAMP]) > 1 then
                 refreshLinesCargoAmounts()
                 refreshLinesTravelTimes()
-                -- checkTrainsCapacity()
+                -- checkTrainsCapacity(true)
                 -- updateSupplyChains(true)                
                 -- log("asrEngine: resuming updateSupplyChains coroutine")
                 coroutine.resume(coroutines.updateSupplyChains)
