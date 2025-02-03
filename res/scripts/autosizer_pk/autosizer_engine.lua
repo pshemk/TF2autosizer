@@ -921,6 +921,12 @@ local function updateSupplyChains(runInForeground)
                                     [asrEnum.industry.SUPPLIER_ITERATION] = {}
                                 }
                             end
+                            if engineState[asrEnum.INDUSTRIES][tostring(supplierId)][asrEnum.industry.NAME] == nil then 
+                                local name = api.engine.getComponent(tonumber(supplierId), api.type.ComponentType.NAME)
+                                if name then
+                                    engineState[asrEnum.INDUSTRIES][tostring(supplierId)][asrEnum.industry.NAME] = name.name
+                                end
+                            end    
                             if engineState[asrEnum.INDUSTRIES][tostring(supplierId)] ~= nil and engineState[asrEnum.INDUSTRIES][tostring(supplierId)][asrEnum.industry.SUPPLIER] == nil then
                                 engineState[asrEnum.INDUSTRIES][tostring(supplierId)][asrEnum.industry.SUPPLIER] = {}
                             end
