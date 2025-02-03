@@ -2728,38 +2728,41 @@ local function checkTrainsPositions()
                             end    
                         end
 
-                        -- check if scheduler is enabled for this station
-                        if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.SCHEDULER_ENABLED] and 
-                            engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] and #engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] > 1 then
-                            if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] then
-                                if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] and engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME] then 
-                                    -- local stationDwellTime = 10
-                                    -- if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.STOP_DURATION] then 
-                                    --     stationDwellTime = math.min(table.unpack(engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.STOP_DURATION]))
-                                    -- end
-                                    local timeBetweenTrains = engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME]
-                                    local waitTime = engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] - getGameTime() + timeBetweenTrains
-                                    local scheduledDepartureTime =  engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] + timeBetweenTrains
-                                    log ("asrEngine: train " .. getTrainName(trainId) .. " frequency: " .. timeBetweenTrains .. "s")
-                                    log ("asrEngine: train " .. getTrainName(trainId) .. " last train was here: " .. getGameTime() - engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] .. 
-                                            "s ago, we'll wait for: " .. waitTime) 
-                                    if scheduledDepartureTime <= getGameTime() then
-                                        -- we're already too late, don't wait
-                                        log ("asrEngine: train " .. getTrainName(trainId) .. " is already late, won't wait") 
-                                    else
-                                        -- set the waiting flag
-                                        engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.DELAY_DEPARTURE] = true
-                                        log ("asrEngine: train " .. getTrainName(trainId) .. " will wait here") 
-                                    end
-                                else 
-                                    log ("asrEngine: train " .. getTrainName(trainId) .. " either no time or no count, can't schedule departure") 
+                    -- check if scheduler is enabled for this station
+                    if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)] and 
+                    engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS] and
+                    engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1] and 
+                    engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.SCHEDULER_ENABLED] and 
+                    engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] and #engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] > 1 then 
+                        if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] then
+                            if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAIN_LIST] and engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME] then 
+                                -- local stationDwellTime = 10
+                                -- if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.STOP_DURATION] then 
+                                --     stationDwellTime = math.min(table.unpack(engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.STOP_DURATION]))
+                                -- end
+                                local timeBetweenTrains = engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.TRAVEL_TIME]
+                                local waitTime = engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] - getGameTime() + timeBetweenTrains
+                                local scheduledDepartureTime =  engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] + timeBetweenTrains
+                                log ("engine: train " .. getTrainName(trainId) .. " frequency: " .. timeBetweenTrains .. "s")
+                                log ("engine: train " .. getTrainName(trainId) .. " last train was here: " .. getGameTime() - engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] .. 
+                                        "s ago, we'll wait for: " .. waitTime) 
+                                if scheduledDepartureTime <= getGameTime() then
+                                    -- we're already too late, don't wait
+                                    log ("engine: train " .. getTrainName(trainId) .. " is already late, won't wait") 
+                                else
+                                    -- set the waiting flag
+                                    engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.DELAY_DEPARTURE] = true
+                                    log ("engine: train " .. getTrainName(trainId) .. " will wait here") 
                                 end
                             else 
-                                log ("asrEngine: train " .. getTrainName(trainId) .. " no unload timestamp") 
+                                log ("engine: train " .. getTrainName(trainId) .. " either no time or no count, can't schedule departure") 
                             end
+                        else 
+                            log ("engine: train " .. getTrainName(trainId) .. " no unload timestamp") 
                         end
                     end
                 end
+            end
 
                 -- train is unloading
                 if trainCurrentInfo and trainCurrentInfo.timeUntilLoad ~= trainPrevInfo[asrEnum.trackedTrain.TIME_UNTIL_LOAD] and trainPrevInfo[asrEnum.trackedTrain.IN_STATION] then

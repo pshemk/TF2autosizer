@@ -1406,8 +1406,9 @@ local function rebuildLineSettingsLayout()
                     sendEngineCommand("asrLineSettings", { lineId = lineId, property = asrEnum.lineSettngs.TRAIN_LENGTH, value = amountValueNum})
                 end)
                 trainLengthManualTextInput:onCancel(function () 
-                    if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH] then
-                        trainLengthManualTextInput:setText(tostring(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH]), false) 
+                    if asrState[asrEnum.LINES][tostring(lineId)] and asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS] and 
+                       asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH] then
+                        trainLengthManualTextInput:setText(tostring(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.SETTINGS][asrEnum.lineSettngs.TRAIN_LENGTH]), false) 
                     end    
                 end)
                 -- trainLengthTable:addRow({trainLengthAutomaticCheckBox, trainLengthAutomaticLabel, api.gui.comp.TextView.new("000m")})
