@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 21,   -- multi-compartment fix and unexpected cargo warning
+      minorVersion = 22,   -- fix gui and scheduler lookup crash
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
