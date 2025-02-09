@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 22,   -- fix gui and scheduler lookup crash
+      minorVersion = 23,   -- multi compartment handling, delayed tracking start
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
