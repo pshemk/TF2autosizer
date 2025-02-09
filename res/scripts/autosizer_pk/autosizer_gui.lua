@@ -1530,8 +1530,11 @@ local function rebuildLineSettingsLayout()
 
                 if asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST] then
                     for _, trainId in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAIN_LIST]) do 
-                        local trainNameAPI = api.engine.getComponent(tonumber(trainId), api.type.ComponentType.NAME)
-                        local trainName = trainNameAPI.name
+                        local trainName = "???"
+                        if api.engine.entityExists(tonumber(trainId)) then 
+                            local trainNameAPI = api.engine.getComponent(tonumber(trainId), api.type.ComponentType.NAME)
+                            trainName = trainNameAPI.name
+                        end
 
                         table.insert(trainNames, { name = trainName })
 
