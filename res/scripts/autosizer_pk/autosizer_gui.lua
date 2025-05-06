@@ -1254,7 +1254,8 @@ local function rebuildLineSettingsLayout()
                             local cargoAmountExpectedLabelText = api.gui.comp.TextView.new(i18Strings.expecting_cargo)
                             cargoAmountExpectedLabelText:setStyleClassList({"asrTableNoSpaces"})
                             currentAmountTable:addRow({cargoAmountExpectedLabelText})
-                            if station[asrEnum.station.CARGO_AMOUNTS] then
+                            if station[asrEnum.station.CARGO_AMOUNTS] and 
+                                asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.CARGO_AMOUNTS] then
                                 for cargoId, cargoAmount in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.CARGO_AMOUNTS]) do
                                     local cargoAmountLayout = api.gui.layout.BoxLayout.new("HORIZONTAL")
                                     local cargoAmountWrapper = api.gui.comp.Component.new("asrCargoAmountWrapper")
@@ -1594,7 +1595,7 @@ local function rebuildLineSettingsLayout()
                             trainTrackedIcon = api.gui.comp.ImageView.new("ui/icons/game-menu/speed@2x.tga")
                             trainTrackedIcon:setMinimumSize(api.gui.util.Size.new(19, 19))
                             trainTrackedIcon:setMaximumSize(api.gui.util.Size.new(19, 19))    
-                            trainTrackedIcon:setStyleClassList({"asrClockIcon"})
+                            -- trainTrackedIcon:setStyleClassList({"asrClockIcon"})
                             trainTrackedIcon:setTooltip(i18Strings.tracking_delayed)
                         else
                             trainTrackedIcon = api.gui.comp.ImageView.new("ui/icons/build-control/cancel@2x.tga")
@@ -2305,7 +2306,7 @@ local function getTimings()
                 end
               end
             timingsTable:addRow({api.gui.comp.TextView.new(""), api.gui.comp.TextView.new(""), api.gui.comp.TextView.new("") })              
-            timingsTable:addRow({api.gui.comp.TextView.new("Trains (currently tracked"), api.gui.comp.TextView.new(tostring(trainCount)),api.gui.comp.TextView.new("") })
+            timingsTable:addRow({api.gui.comp.TextView.new("Trains (currently tracked)"), api.gui.comp.TextView.new(tostring(trainCount)),api.gui.comp.TextView.new("") })
             timingsTable:addRow({api.gui.comp.TextView.new("Trains (waiting to be tracked)"), api.gui.comp.TextView.new(tostring(delayedCount)),api.gui.comp.TextView.new("") })
             timingsTable:addRow({api.gui.comp.TextView.new("Trains (not currently tracked)"), api.gui.comp.TextView.new(tostring(otherCount)),api.gui.comp.TextView.new("") })
         end
