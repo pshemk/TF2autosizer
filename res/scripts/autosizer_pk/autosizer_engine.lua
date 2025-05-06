@@ -3374,7 +3374,7 @@ local function updateCargoGroup(params)
         end 
 
         engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][params.property] = params.value
-        engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.CARGO_AMOUNT] = 0
+        -- engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.CARGO_AMOUNT] = 0
         if params.property == asrEnum.cargoGroup.NAME then
             engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MANUAL_NAME] = true
         end
