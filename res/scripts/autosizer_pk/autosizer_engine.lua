@@ -1142,7 +1142,9 @@ local function refreshLinesCargoAmounts()
                                 end
                             end
                             if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.CARGO_AMOUNT] and 
-                                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.CARGO_AMOUNT] == 0 then
+                                engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopSequence][asrEnum.station.CARGO_AMOUNT] == 0 and 
+                                engineState[asrEnum.SETTINGS] and engineState[asrEnum.SETTINGS][asrEnum.settings.MINIMAL_WAGON_COUNT] and 
+                                engineState[asrEnum.SETTINGS][asrEnum.settings.MINIMAL_WAGON_COUNT] == 0 then
                                 alwaysTrack = true
                             end
                         end
@@ -2964,7 +2966,8 @@ local function checkTrainsPositions()
 
                 -- check if the line is still enabled and store the current state
                 if trainCurrentInfo then 
-                    if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.ENABLED] then 
+                    if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)] and 
+                        engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.ENABLED] then 
                         if engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then 
                             engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.STATE] = trainCurrentInfo.state
                             engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TIME_UNTIL_LOAD] = trainCurrentInfo.timeUntilLoad
