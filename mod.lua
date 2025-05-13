@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 23,   -- multi compartment handling, delayed tracking start
+      minorVersion = 24,   -- minor fixes
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
