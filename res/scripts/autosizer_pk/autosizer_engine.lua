@@ -2722,11 +2722,14 @@ local function checkTrainsPositions()
                         end
                         local stationConfig = engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1] 
                 
-                        local stationName = api.engine.getComponent(stationConfig[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME)
-                        if stationName and stationName.name then
-                            log("asrEngine: train " .. getTrainName(trainId) .. " station name: " .. stationName.name)
+                        if stationConfig and stationConfig[asrEnum.station.STATION_GROUP_ID] then 
+                            local stationName = api.engine.getComponent(stationConfig[asrEnum.station.STATION_GROUP_ID], api.type.ComponentType.NAME)
+                            if stationName and stationName.name then
+                                log("asrEngine: train " .. getTrainName(trainId) .. " station name: " .. stationName.name)
+                            end
+                        else 
+                            log("asrEngine: train " .. getTrainName(trainId) .. " can't find station name")
                         end
-                
                         if trainPrevInfo[asrEnum.trackedTrain.TRACKING_START_TIMESTAMP] then
                             log("asrEngine: train " .. getTrainName(trainId) .. " took " .. (getGameTime() - trainPrevInfo[asrEnum.trackedTrain.TRACKING_START_TIMESTAMP]) .. "s since tracking" )
                         end
@@ -2838,7 +2841,9 @@ local function checkTrainsPositions()
                             end
                         end
 
-                        if not trainPrevInfo[asrEnum.trackedTrain.DELAY_DEPARTURE] and not trainPrevInfo[asrEnum.trackedTrain.UNLOAD_TIMESTAMP_RECORDED] then
+                        if not trainPrevInfo[asrEnum.trackedTrain.DELAY_DEPARTURE] and not trainPrevInfo[asrEnum.trackedTrain.UNLOAD_TIMESTAMP_RECORDED] and 
+                            engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS] and 
+                            engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1] then
                             engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.UNLOAD_TIMESTAMP] = getGameTime()
                             engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.UNLOAD_TIMESTAMP_RECORDED] = true 
                             log ("asrEngine: train " .. getTrainName(trainId) .. " storing unload timestamp for index: " .. trainCurrentInfo.stopIndex)
@@ -2934,11 +2939,10 @@ local function checkTrainsPositions()
                         end
                         log("asrEngine: train " .. getTrainName(trainId) .. " spent " .. stopDuration .. " s (plus waiting for: " .. waitDuration .. "s)")
 
-                        if trainPrevInfo[asrEnum.trackedTrain.STOP_INDEX] then 
-                            if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainPrevInfo[asrEnum.trackedTrain.STOP_INDEX] + 1] then 
-                                if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainPrevInfo[asrEnum.trackedTrain.STOP_INDEX] + 1][asrEnum.station.STOP_DURATION] == nil then 
-                                    engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainPrevInfo[asrEnum.trackedTrain.STOP_INDEX] + 1][asrEnum.station.STOP_DURATION] = {}
-                                end
+                        if trainPrevInfo[asrEnum.trackedTrain.STOP_INDEX] and 
+                            engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainPrevInfo[asrEnum.trackedTrain.STOP_INDEX] + 1] then 
+                            if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainPrevInfo[asrEnum.trackedTrain.STOP_INDEX] + 1][asrEnum.station.STOP_DURATION] == nil then 
+                                engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainPrevInfo[asrEnum.trackedTrain.STOP_INDEX] + 1][asrEnum.station.STOP_DURATION] = {}
                             end
                             if stopDuration > 0 then 
                                 table.insert(engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainPrevInfo[asrEnum.trackedTrain.STOP_INDEX] + 1][asrEnum.station.STOP_DURATION], stopDuration)
