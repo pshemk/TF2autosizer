@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 25,   -- minor fixes
+      minorVersion = 26,   -- schedule-only stations allowed
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
