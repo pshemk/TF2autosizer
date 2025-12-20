@@ -544,14 +544,14 @@ local function generateShippingContractName(shippingContractId)
         local consumerName = engineState[asrEnum.INDUSTRIES][tostring(shippingContract[asrEnum.shippingContract.CONSUMER_ID])][asrEnum.industry.NAME]
         -- check if we can find the name of the town
         local supplierTown, consumerTown
-        log("asrEngine: supplier: " .. shippingContract[asrEnum.shippingContract.SUPPLIER_ID] .. " consumer: " .. shippingContract[asrEnum.shippingContract.CONSUMER_ID])
-        log("asrEngine: supplier: " .. supplierName .. " consumer: " .. consumerName)
+        -- log("asrEngine: supplier: " .. shippingContract[asrEnum.shippingContract.SUPPLIER_ID] .. " consumer: " .. shippingContract[asrEnum.shippingContract.CONSUMER_ID])
+        -- log("asrEngine: supplier: " .. supplierName .. " consumer: " .. consumerName)
         -- asrHelper.tprint(townNames)
         for _, townName in pairs(townNames) do
-            if string.find(supplierName, townName) then
+            if string.find(supplierName, townName, 1, true) then
                 supplierTown = townName
             end
-            if string.find(consumerName, townName) then
+            if string.find(consumerName, townName, 1, true) then
                 consumerTown = townName
             end
         end
@@ -560,26 +560,28 @@ local function generateShippingContractName(shippingContractId)
             -- check if we don't have that name already
             local maxSequence = 0
             for _, existingShippingContract in pairs(engineState[asrEnum.SHIPPING_CONTRACTS]) do
-                log("asrEngine: existing: " .. existingShippingContract[asrEnum.shippingContract.NAME])
-                log("asrEngine: new     : " .. newShippingContractName)
-                if string.find(existingShippingContract[asrEnum.shippingContract.NAME], newShippingContractName, 0, true) then
+                -- log("asrEngine: existing: " .. existingShippingContract[asrEnum.shippingContract.NAME])
+                -- log("asrEngine: new     : " .. newShippingContractName)
+                -- log("asrEngine: comparing: " .. tostring(existingShippingContract[asrEnum.shippingContract.ID]) .. " <> " .. tostring(shippingContractId))
+                if string.find(existingShippingContract[asrEnum.shippingContract.NAME], newShippingContractName, 1, true) and 
+                    existingShippingContract[asrEnum.shippingContract.ID] ~= shippingContractId then
                     -- existing, check if we have a #number 
                     local sequence = string.match(existingShippingContract[asrEnum.shippingContract.NAME], "#(%d+)$")
-                    log("asrEngine: existing (found): " .. existingShippingContract[asrEnum.shippingContract.NAME])
+                    -- log("asrEngine: existing (found): " .. existingShippingContract[asrEnum.shippingContract.NAME])
                     if not sequence then sequence = 1 end
                     if tonumber(sequence) > tonumber(maxSequence) then 
-                        log("asrEngine: found sequence: " .. sequence)
+                        -- log("asrEngine: found sequence: " .. sequence)
                         maxSequence = sequence
                     end
                 end
             end
             if tonumber(maxSequence) ~= 0 then
-                log("asrEngine: using new name sequence: " .. (tonumber(maxSequence) + 1))
+                -- log("asrEngine: using new name sequence: " .. (tonumber(maxSequence) + 1))
                 newShippingContractName = newShippingContractName .. " #" .. (tonumber(maxSequence) + 1)
             end
             return newShippingContractName
         else
-            log("not found")
+            log("asrEngine: shipping contract supplier/consumer towns not found")
         end
     end
 end
@@ -624,7 +626,7 @@ local function generateCargoGroupName(cargoGroupId)
     local foundTowns = {}
     for _, memberName in pairs(memberNames) do
         for _, townName in pairs(townNames) do
-            if string.find(memberName, townName) then
+            if string.find(memberName, townName, 1, true) then
                 if not asrHelper.inTable(foundTowns, townName) then
                     table.insert(foundTowns, townName)
                 end
@@ -3363,6 +3365,7 @@ local function updateShippingContract(params)
         local newContract = false
         if not engineState[asrEnum.SHIPPING_CONTRACTS][tostring(params.shippingContractId)] then 
             engineState[asrEnum.SHIPPING_CONTRACTS][tostring(params.shippingContractId)] = {} 
+            engineState[asrEnum.SHIPPING_CONTRACTS][tostring(params.shippingContractId)][asrEnum.shippingContract.ID] = params.shippingContractId
             newContract = true
         end 
         if engineState[asrEnum.SHIPPING_CONTRACTS][tostring(params.shippingContractId)][params.property] and engineState[asrEnum.SHIPPING_CONTRACTS][tostring(params.shippingContractId)][params.property] ~= params.value and 
@@ -3377,7 +3380,7 @@ local function updateShippingContract(params)
         engineState[asrEnum.SHIPPING_CONTRACTS][tostring(params.shippingContractId)][params.property] = params.value
 
         if not engineState[asrEnum.SHIPPING_CONTRACTS][tostring(params.shippingContractId)][asrEnum.shippingContract.MANUAL_NAME] or 
-        string.find(engineState[asrEnum.SHIPPING_CONTRACTS][tostring(params.shippingContractId)][asrEnum.shippingContract.NAME] , "Shipping contract #") then
+        string.find(engineState[asrEnum.SHIPPING_CONTRACTS][tostring(params.shippingContractId)][asrEnum.shippingContract.NAME] , "Shipping contract #", 1, true) then
             local newName = generateShippingContractName(params.shippingContractId)
             if newName then 
                 engineState[asrEnum.SHIPPING_CONTRACTS][tostring(params.shippingContractId)][asrEnum.shippingContract.NAME] =  newName
@@ -3456,7 +3459,7 @@ local function addCargoGroupMember(params)
             checkMemberInUseCounter(params.values[asrEnum.cargoGroupMember.CARGO_GROUP_ID], params.values[asrEnum.cargoGroupMember.TYPE])
         end
         if not engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MANUAL_NAME] or 
-            string.find(engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.NAME] , "Cargo group #") then
+            string.find(engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.NAME] , "Cargo group #", 1, true) then
                 engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.NAME] =  generateCargoGroupName(params.cargoGroupId)
                 engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MANUAL_NAME] = nil
         end
@@ -3485,7 +3488,7 @@ local function deleteCargoGroupMember(params)
             engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MEMBERS][params.memberId] = nil
         end
         if not engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MANUAL_NAME] or 
-            string.find(engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.NAME] , "Cargo group #") then
+            string.find(engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.NAME] , "Cargo group #", 1, true) then
                 engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.NAME] =  generateCargoGroupName(params.cargoGroupId)
                 engineState[asrEnum.CARGO_GROUPS][tostring(params.cargoGroupId)][asrEnum.cargoGroup.MANUAL_NAME] = nil
         end
