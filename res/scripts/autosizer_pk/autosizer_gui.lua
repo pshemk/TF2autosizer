@@ -824,10 +824,18 @@ local function rebuildLineSettingsLayout()
                             })
                             for _,shippingContract in pairs(shippingContracts) do 
         
+                                local shippingContractIcon = nil
+                                local shippingContractIconTip = ""
+
+                                if shippingContract.cargoId ~= nil and cargoTypes[tonumber(shippingContract.cargoId)] then
+                                    shippingContractIcon = "ui/hud/cargo_" .. string.lower(cargoTypes[tonumber(shippingContract.cargoId)]) .. "@2x.tga"
+                                    shippingContractIconTip = string.lower(cargoTypes[tonumber(shippingContract.cargoId)])
+                                end
+
                                 table.insert(dropDownEntries, {
                                     text = shippingContract.shippingContractName,
-                                    icon = "ui/hud/cargo_" .. string.lower(cargoTypes[tonumber(shippingContract.cargoId)]) .. "@2x.tga",
-                                    iconTip = string.lower(cargoTypes[tonumber(shippingContract.cargoId)]),
+                                    icon = shippingContractIcon,
+                                    iconTip = shippingContractIconTip,
                                     icon2 = "ui/icons/game-menu/configure_line@2x.tga",
                                     icon2Tip = "",
                                     value = {

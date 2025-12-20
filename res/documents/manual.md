@@ -217,6 +217,8 @@ In addtion, if display of train tracking information is enabled in settings, the
 
 ![Departure scheduler](images/departure_scheduler2.png)
 
+The scheduler relies on the in-game frequency calculations by default. If the invidual round-trips vary singnificantly in duration (for example due to random congestion or large number of passing loops on a long single-track line) the scheduler will keep on adjusting the wait times but won't be able to settle. 
+
 ### Trains with no wagons
 
 It's possible to reduce the number of wagons to zero and end up with an engine-only train, this can be achieved in two ways:
