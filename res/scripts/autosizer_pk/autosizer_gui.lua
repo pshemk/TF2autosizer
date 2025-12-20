@@ -29,6 +29,7 @@ local asrGuiState = {
     cargoGroupsFilterString = "",
     linesSelectorHover = -1,
     showStatusWindow = false,
+    cargoGroupEditId = nil,
 }
 
 -- state and gui objects
@@ -3242,6 +3243,7 @@ local function rebuildCargoGroupsLayout()
                         cargoGroupNameTextInput:setVisible(false, false)
                         cargoGroupNameLabel:setText(value, false)
                         cargoGroupNameLabel:setVisible(true, false)
+                        asrGuiState.cargoGroupEditId = nil
                     end
                 end)
                 cargoGroupNameTextInput:onEnter(function () 
@@ -3250,12 +3252,14 @@ local function rebuildCargoGroupsLayout()
                     cargoGroupNameTextInput:setVisible(false, false)
                     cargoGroupNameLabel:setText(value, false)
                     cargoGroupNameLabel:setVisible(true, false)
+                    asrGuiState.cargoGroupEditId = nil
                 end)
                 cargoGroupNameTextInput:onCancel(function () 
                     cargoGroupNameTextInput:setText(cargoGroup[asrEnum.cargoGroup.NAME], false)
                     cargoGroupNameTextInput:setVisible(false, false)
                     cargoGroupNameLabel:setText(cargoGroup[asrEnum.cargoGroup.NAME], false)
                     cargoGroupNameLabel:setVisible(true, false)
+                    asrGuiState.cargoGroupEditId = nil
                 end)
 
                 local cargoGroupEditIcon = api.gui.comp.ImageView.new("ui/button/xxsmall/edit.tga")
@@ -3267,14 +3271,21 @@ local function rebuildCargoGroupsLayout()
                 cargoGroupEditButton:setVisible(false, false)
                 cargoGroupEditButton:setTooltip(i18Strings.rename_cargo_group)
                 cargoGroupEditButton:onClick(function ()
+                    -- log("gui: rebuildCargoGroupsLayout: cargoGroup Edit button clicked for id: " .. tostring(cargoGroupId))
                     if cargoGroupNameLabel:isVisible() then
                         cargoGroupNameLabel:setVisible(false, false)
                         cargoGroupNameTextInput:setVisible(true, false)
+                        asrGuiState.cargoGroupEditId = cargoGroupId
                     else
                         cargoGroupNameLabel:setVisible(true, false)
                         cargoGroupNameTextInput:setVisible(false, false)
+                        asrGuiState.cargoGroupEditId = nil
                     end
                 end)
+                if asrGuiState.cargoGroupEditId == cargoGroupId then
+                    cargoGroupNameLabel:setVisible(false, false)
+                    cargoGroupNameTextInput:setVisible(true, false)
+                end
 
                 local cargoGroupDeleteIcon = api.gui.comp.ImageView.new("ui/button/xxsmall/sell_thin.tga")
                 cargoGroupDeleteIcon:setId("asr.cargoGroupDeleteIcon-" .. tostring(cargoGroupId))
