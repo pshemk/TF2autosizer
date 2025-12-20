@@ -293,4 +293,4 @@ One other consideration is the number of API calls made by the mod to the game. 
 
 8. It's always the last wagons that get removed from the train. The maintenance data of the original engine and wagons is copied to the new train. That might result in the game displaying the train as having multiple groups of the same wagons (instead of just one group).
 
-9. Generation of the new train configuration happens as the train is almost offloaded. If the train is stopped by the scheduler the configuration is generated when the train is started again.
+9. Generation of the new train configuration happens as the train is almost unloaded. If the train is stopped by the scheduler the configuration is generated when the train is started again.
