@@ -452,7 +452,7 @@ local function updateLinesNames()
                     linesUpdated = true
                 end
             else
-                print ("asrEngine: wrong component (line id): " .. lineId)
+                log("asrEngine: wrong component (line id): " .. lineId)
                 break
             end
         end
@@ -727,7 +727,7 @@ local function getConsumerType(consumerId)
             return  "industry", nil
         end
     else
-        print("asrEngine: can't determine game entity for consumer: " .. consumerId)
+        log("asrEngine: can't determine game entity for consumer: " .. consumerId)
     end
 end
 
@@ -981,7 +981,7 @@ local function updateSupplyChains(runInForeground)
                         end
                     end
                 else
-                    print("asrEngine: updateSupplyChains: can't identify the consumer: " .. consumerId)
+                    log("asrEngine: updateSupplyChains: can't identify the consumer: " .. consumerId)
                 end
            end 
            if not runInForeground and  (os.clock() - startTime)*1000 >= 25 then
@@ -1441,7 +1441,7 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
 
         for idx, vehicle in pairs(trainDetails.transportVehicleConfig.vehicles) do
             if engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)] == nil then
-                print("asrEngine: train " .. getTrainName(trainId) .. " no info about model: " .. vehicle.part.modelId .. " refreshing cache" )
+                log("asrEngine: train " .. getTrainName(trainId) .. " no info about model: " .. vehicle.part.modelId .. " refreshing cache" )
                 getModelDetails(vehicle.part.modelId)
             end
             table.insert(trainWagonModels, vehicle.part.modelId)
@@ -1650,12 +1650,12 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
             if #cargoList > 0 then 
                 if cargoStatus[tostring(cargoId)] then 
                     if  cargoStatus[tostring(cargoId)].requiredCapacity and #cargoList > cargoStatus[tostring(cargoId)].requiredCapacity then
-                        print("asrEngine: train " .. getTrainName(trainId) .. " onboard cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " amount: " .. #cargoList .. " currently required: " .. cargoStatus[tostring(cargoId)].requiredCapacity .. " increasing to match it")
+                        log("asrEngine: train " .. getTrainName(trainId) .. " onboard cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " amount: " .. #cargoList .. " currently required: " .. cargoStatus[tostring(cargoId)].requiredCapacity .. " increasing to match it")
                         cargoStatus[tostring(cargoId)].requiredCapacity = #cargoList
                         cargoStatus[tostring(cargoId)].priority = 2
                     end
                 else 
-                    print("asrEngine: train " .. getTrainName(trainId) .. " onboard cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " amount: " .. #cargoList .. " that was not expected, increasing to match it")
+                    log("asrEngine: train " .. getTrainName(trainId) .. " onboard cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " amount: " .. #cargoList .. " that was not expected, increasing to match it")
                     cargoStatus[tostring(cargoId)] = { requiredCapacity = #cargoList, currentCapacity = 0, maxWagonCapacity = 0, wagonsFound = 0, priority = 2 }
                 end
             end
@@ -1941,7 +1941,7 @@ local function generateTrainConfigForMultipleCargos(trainId, lineId, stopIndex)
             end
 
             if not engineState[asrEnum.MODEL_CACHE][tostring(modelId)] or not engineState[asrEnum.MODEL_CACHE][tostring(modelId)][asrEnum.modelCache.LENGTH] then 
-                print("asrEngine: train " .. getTrainName(trainId) .. " no info about model: " .. modelId .. " refreshing cache" )
+                log("asrEngine: train " .. getTrainName(trainId) .. " no info about model: " .. modelId .. " refreshing cache" )
                 getModelDetails(modelId)
             end
             if trainLength + engineState[asrEnum.MODEL_CACHE][tostring(modelId)][asrEnum.modelCache.LENGTH] < maxTrainLength then
@@ -2068,12 +2068,12 @@ local function generateTrainConfigForASingleAmount(trainId, lineId, stopIndex)
         local travelTime = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.TRAVEL_TIME]
         
         if not travelTime then 
-            print("asrEngine: train " .. getTrainName(trainId) .. " no travel time")
+            log("asrEngine: train " .. getTrainName(trainId) .. " no travel time")
             asrHelper.tprint(engineState[asrEnum.LINES][tostring(lineId)])
             return
         end
         if not cargoAmount then 
-            print("asrEngine: train " .. getTrainName(trainId) .. " no cargo amount")
+            log("asrEngine: train " .. getTrainName(trainId) .. " no cargo amount")
             asrHelper.tprint(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1])
             return
         end
@@ -2256,7 +2256,7 @@ local function generateTrainConfigForASingleAmount(trainId, lineId, stopIndex)
             autoLoadConfig = {}
             loadConfig = {}
             if not engineState[asrEnum.MODEL_CACHE][tostring(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq])] then
-                print("asrEngine: train " .. getTrainName(trainId) .. " issue getting details of wagon no: " .. modelSeq .. " refreshing cache")
+                log("asrEngine: train " .. getTrainName(trainId) .. " issue getting details of wagon no: " .. modelSeq .. " refreshing cache")
                 getModelDetails(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.VEHICLES][asrEnum.vehicle.WAGONS][modelSeq])
             end
 
@@ -2362,7 +2362,7 @@ local function generateTrainConfigForASingleAmount(trainId, lineId, stopIndex)
         if engineState[asrEnum.STATUS][asrEnum.status.TIMINGS_ENABLED] then storeTimings("generateTrainConfigForASingleAmount", math.ceil((os.clock() - startTime)*1000000)/1000) end
         return trainConfig, stage
     else
-        print("asrEngine: train " .. getTrainName(trainId) .. " can't identify new config for train: " .. trainId, " line: " .. lineId .. " stopIndex: " .. stopIndex)
+        log("asrEngine: train " .. getTrainName(trainId) .. " can't identify new config for train: " .. trainId, " line: " .. lineId .. " stopIndex: " .. stopIndex)
     end
 end
 
@@ -2375,13 +2375,13 @@ local function generateTrainConfig(trainId, lineId, stopIndex)
         local cargoAmount = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CARGO_AMOUNT]
         local cargoAmounts = engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1][asrEnum.station.CARGO_AMOUNTS]
         if not travelTime then 
-            print("asrEngine: train " .. getTrainName(trainId) .. " no travel time")
+            log("asrEngine: train " .. getTrainName(trainId) .. " no travel time")
             asrHelper.tprint(engineState[asrEnum.LINES][tostring(lineId)])
             return
         end
 
         if not cargoAmount and not cargoAmounts then
-            print("asrEngine: train " .. getTrainName(trainId) .. " no cargo amount(s)")
+            log("asrEngine: train " .. getTrainName(trainId) .. " no cargo amount(s)")
             asrHelper.tprint(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS][stopIndex + 1])
             return    
         end
@@ -2407,7 +2407,7 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
                 return
             end
             if not travelTime  then
-                print("asrEngine: train " .. getTrainName(trainId) .. " missing travel time")
+                log("asrEngine: train " .. getTrainName(trainId) .. " missing travel time")
                 return
             end    
             
@@ -2415,7 +2415,7 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
             local currentCapacity = 0
 
 
-            print("asrEngine: train " .. getTrainName(trainId) .. " checking capacities")
+            log("asrEngine: train " .. getTrainName(trainId) .. " checking capacities")
             local currentWagonCount = 0
             local currentEngineCount = 0
             for _, vehicle in pairs(trainVehicles) do
@@ -2449,7 +2449,7 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
                 local trainCompartmentsUsed = {}
                 for idx, vehicle in pairs(trainVehicles) do
                     if engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)] == nil then
-                        print("asrEngine: train " .. getTrainName(trainId) .. " no info about model: " .. vehicle.part.modelId .. " refreshing cache" )
+                        log("asrEngine: train " .. getTrainName(trainId) .. " no info about model: " .. vehicle.part.modelId .. " refreshing cache" )
                         getModelDetails(vehicle.part.modelId)
                     end
                     table.insert(trainWagonModels, vehicle.part.modelId)
@@ -2514,16 +2514,16 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
                         end                        
 
                         if currentCapacity >= requiredCapacity and currentCapacity <  requiredCapacity + maxWagonCapacity then
-                            print("asrEngine: train " .. getTrainName(trainId) .. " cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " capacity is OK")
+                            log("asrEngine: train " .. getTrainName(trainId) .. " cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " capacity is OK")
                         else
-                            print("asrEngine: train " .. getTrainName(trainId) .. " cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " capacity must be adjusted, current: " .. currentCapacity .. " required: " .. requiredCapacity .. " wagon capacity: " .. maxWagonCapacity) 
+                            log("asrEngine: train " .. getTrainName(trainId) .. " cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]) .. " capacity must be adjusted, current: " .. currentCapacity .. " required: " .. requiredCapacity .. " wagon capacity: " .. maxWagonCapacity) 
                             adjustmentNeeded = true
                         end                
                         if not (requiredCapacity > currentCapacity) then
                             additionsOnly = false 
                         end
                     else
-                        print("asrEngine: train " .. getTrainName(trainId) .. " no cargo map, cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]))   
+                        log("asrEngine: train " .. getTrainName(trainId) .. " no cargo map, cargo: " .. string.upper(cargoTypes[tonumber(cargoId)]))   
                     end
                 end
 
@@ -2560,7 +2560,7 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
                     end
                 end
                 if spareWagonCount > 0 then
-                    print("asrEngine: train " .. getTrainName(trainId) .. " spare wagons found: " .. spareWagonCount)
+                    log("asrEngine: train " .. getTrainName(trainId) .. " spare wagons found: " .. spareWagonCount)
                 end
                 if adjustmentNeeded then
                     return true, currentWagonCount
@@ -2685,7 +2685,7 @@ local function checkTrainsCapacity(runInForeground)
                                 end
                             end
                         else
-                            print("asrEngine: train " .. getTrainName(trainId) .. " couldn't get info from the API (" .. trainId .. ")")
+                            log("asrEngine: train " .. getTrainName(trainId) .. " couldn't get info from the API (" .. trainId .. ")")
                             -- flags.paused = true
                             break
                         end
@@ -3186,7 +3186,7 @@ local function updateLineIndustriesAndTowns(lineId)
             end
         end
     else
-        print("asrEngine: can't get town to building map")
+        log("asrEngine: can't get town to building map")
     end
     -- check for any industries that disappeared
     for industryId, industryDetails in pairs(engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.INDUSTRIES]) do
@@ -3555,12 +3555,14 @@ function asrEngine.handleEvent(id, params)
     elseif id == "asrEnableDebug" then
         log("asrEngine: debug enabled")
         engineState[asrEnum.STATUS][asrEnum.status.DEBUG_ENABLED] = true
+        asrHelper.setDebugEnabled(true)
     elseif id == "asrEnableGuiDebug" then
         log("asrEngine: gui debug enabled")
         engineState[asrEnum.STATUS][asrEnum.status.GUI_DEBUG] = true
     elseif id == "asrDisableDebug" then
         log("asrEngine: debug disabled")
         engineState[asrEnum.STATUS][asrEnum.status.DEBUG_ENABLED] = false
+        asrHelper.setDebugEnabled(false)
     elseif id == "asrEnableTimings" then
         log("asrEngine: timings enabled")
         engineState[asrEnum.STATUS][asrEnum.status.TIMINGS_ENABLED] = true
@@ -3630,7 +3632,7 @@ function asrEngine.handleEvent(id, params)
         log("asrEngine: asrDumpState")        
         asrHelper.tprint(engineState)
     else
-        print("uknown message type:" .. id)
+        log("uknown message type:" .. id)
     end
 
 end
@@ -3746,7 +3748,7 @@ function asrEngine.update()
         -- always clear model cache
         engineState[asrEnum.MODEL_CACHE] = {}
         if engineState[asrEnum.STATUS][asrEnum.status.STATE_VERSION] == nil then
-            print("asrEngine: no previous state version, using current of: " .. globalStateVersion)
+            log("asrEngine: no previous state version, using current of: " .. globalStateVersion)
             engineState[asrEnum.STATUS][asrEnum.status.STATE_VERSION] = globalStateVersion
         end
 

@@ -1,8 +1,14 @@
 local asrEnum = require "autosizer_pk/autosizer_enums"
 
 local asrHelper = {}
+local debugEnabled = false
+
+function asrHelper.setDebugEnabled(enabled)
+  debugEnabled = enabled
+end
 
 function asrHelper.tprint(tbl, indent)
+    if not debugEnabled then return end
     if type(tbl) ~= 'table' then return print(tbl) end
     if not indent then indent = 0 end
     for k, v in pairs(tbl) do
