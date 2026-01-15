@@ -3525,7 +3525,7 @@ local function rebuildCargoGroupsLayout()
                                 end
                             end
                         end
-                        if not memberFound then 
+                        if not memberFound and shippingContract.cargoId and cargoTypes[tonumber(shippingContract.cargoId)] then 
                             table.insert(dropDownEntries, {
                                 text = shippingContract.shippingContractName,
                                 icon = "ui/hud/cargo_" .. string.lower(cargoTypes[tonumber(shippingContract.cargoId)]) .. "@2x.tga",
