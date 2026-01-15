@@ -2401,11 +2401,11 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
        not engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.TRACKING_ENABLED]  then
         -- check if the station has the requirements defined
         if stationConfig[asrEnum.station.ENABLED] == true then
-            if not stationConfig[asrEnum.station.CARGO_AMOUNT]  then
-                -- this can happen when only scheduler is enabled, but cargo tracking is not
-                -- print("asrEngine: train " .. getTrainName(trainId) .. " missing cargo amount")
-                return
-            end
+            -- if not stationConfig[asrEnum.station.CARGO_AMOUNT]  then
+            --     -- this can happen when only scheduler is enabled, but cargo tracking is not
+            --     -- print("asrEngine: train " .. getTrainName(trainId) .. " missing cargo amount")
+            --     return
+            -- end
             if not travelTime  then
                 log("asrEngine: train " .. getTrainName(trainId) .. " missing travel time")
                 return
@@ -2425,7 +2425,23 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
                 if engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)][asrEnum.modelCache.TYPE] == "engine" then currentEngineCount = currentEngineCount + 1 end
                 if engineState[asrEnum.MODEL_CACHE][tostring(vehicle.part.modelId)][asrEnum.modelCache.TYPE] == "wagon" then currentWagonCount = currentWagonCount + 1 end
             end
-        
+
+            -- if additional cargo pickup is enabled the train must be tracked
+            if stationConfig[asrEnum.station.WAITING_CARGO_ENABLED] == true then 
+                return true, currentWagonCount
+            end
+
+            -- if scheduled departuers are enabled - track the train
+            if stationConfig[asrEnum.station.SCHEDULER_ENABLED] == true then 
+                return true, currentWagonCount
+            end
+
+            -- if the line is set to "always track" (due to engine-only trains)
+            if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ALWAYS_TRACK] == true then 
+                return true, currentWagonCount
+            end
+            
+
             local capacityScaleFactor = 1
 
             -- check if we need to adjust the capacity 
@@ -2535,21 +2551,6 @@ local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationCo
                 --     currentWagonCount = 0
                 --     print("asrEngine: train " .. getTrainName(trainId) .. " will be increasing capacity")   
                 -- end
-
-                -- if additional cargo pickup is enabled the train must be tracked
-                if stationConfig[asrEnum.station.WAITING_CARGO_ENABLED] == true then 
-                    return true, currentWagonCount
-                end
-
-                -- if scheduled departuers are enabled - track the train
-                if stationConfig[asrEnum.station.SCHEDULER_ENABLED] == true then 
-                    return true, currentWagonCount
-                end
-
-                -- if the line is set to "always track" (due to engine-only trains)
-                if engineState[asrEnum.LINES][tostring(lineId)][asrEnum.line.ALWAYS_TRACK] == true then 
-                    return true, currentWagonCount
-                end
 
                 -- check if we have any unclaimed compartments
                 local spareWagonCount = 0
