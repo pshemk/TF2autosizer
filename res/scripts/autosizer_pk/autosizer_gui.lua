@@ -581,7 +581,7 @@ local function rebuildLineSettingsLayout()
                 for stopSequence, station in pairs(asrState[asrEnum.LINES][tostring(lineId)][asrEnum.line.STATIONS]) do
                     local stationName = ""
                     if station[asrEnum.station.STATION_GROUP_ID] ~= nil then
-                        if api.engine.entityExists(tonumber(station[asrEnum.station.STATION_GROUP_ID])) then 
+                        if tonumber(station[asrEnum.station.STATION_GROUP_ID]) and api.engine.entityExists(tonumber(station[asrEnum.station.STATION_GROUP_ID])) then 
                             local stationNameAPI = api.engine.getComponent(tonumber(station[asrEnum.station.STATION_GROUP_ID]), api.type.ComponentType.NAME)
                             stationName = stationNameAPI.name
                         end
