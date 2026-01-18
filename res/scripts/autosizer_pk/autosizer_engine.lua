@@ -2832,7 +2832,9 @@ local function checkTrainsPositions()
                         end
             
                         if trainPrevInfo[asrEnum.trackedTrain.IN_STATION] and not trainPrevInfo[asrEnum.trackedTrain.REPLACED] and not engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.IS_STOPPED] then
-                        if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.SELECTOR] then 
+                        if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)] and 
+                           engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1] and 
+                           engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.SELECTOR] then 
                                 if not trainPrevInfo[asrEnum.trackedTrain.GENERATED_CONFIG] then
                                     log("asrEngine: train " .. getTrainName(trainId) .. " preparing vehicle replacement (unload at " .. trainCurrentInfo.timeUntilLoad .. ", trainId: " ..  trainId .. ")")
                                     local replacementConfig, stage = generateTrainConfig(trainId, trainCurrentInfo.line, trainCurrentInfo.stopIndex)
@@ -2937,7 +2939,9 @@ local function checkTrainsPositions()
                     engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)][asrEnum.trackedTrain.DEPARTURE_TIMESTAMP] = getGameTime()
                     -- log("asrEngine: train " .. getTrainName(trainId) .. " departure timestamp: " .. getGameTime())
 
-                    if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.SELECTOR] then 
+                    if engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)] and 
+                       engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1] and 
+                       engineState[asrEnum.LINES][tostring(trainCurrentInfo.line)][asrEnum.line.STATIONS][trainCurrentInfo.stopIndex + 1][asrEnum.station.SELECTOR] then 
                         if trainPrevInfo[asrEnum.trackedTrain.REPLACE_ON] == "departure" and not trainPrevInfo[asrEnum.trackedTrain.REPLACED]  then 
                             if not trainConfigCache[tostring(trainId)] then
                                 -- config might got lost during save/restore
