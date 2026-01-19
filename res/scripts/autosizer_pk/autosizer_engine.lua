@@ -2394,7 +2394,7 @@ local function generateTrainConfig(trainId, lineId, stopIndex)
 end
 
 
-local function checkIfCapacityAdjustmentNeeded(trainId, trainVehicles, stationConfig, travelTime, lineId)
+local function checkIfTrackingNeeded(trainId, trainVehicles, stationConfig, travelTime, lineId)
 
     -- only run if trainId is not tracked already
     if not engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] or 
@@ -2610,7 +2610,7 @@ local function checkTrainsCapacity(runInForeground)
                                 and engineState[asrEnum.CHECKED_TRAINS][tostring(trainId)] ~= trainInfo.stopIndex  then -- ignore if train is already stopped at a station or has been checked already
                                 -- at the next station train might require configuration adjustment, check if current config is sufficient
                                 -- log("asrEngine: will check again")
-                                local checkResult, currentWagonCount = checkIfCapacityAdjustmentNeeded(trainId, trainInfo.transportVehicleConfig.vehicles, line[asrEnum.line.STATIONS][trainInfo.stopIndex + 1], line[asrEnum.line.TRAVEL_TIME], lineId)
+                                local checkResult, currentWagonCount = checkIfTrackingNeeded(trainId, trainInfo.transportVehicleConfig.vehicles, line[asrEnum.line.STATIONS][trainInfo.stopIndex + 1], line[asrEnum.line.TRAVEL_TIME], lineId)
                                 if not engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] then 
                                     engineState[asrEnum.TRACKED_TRAINS][tostring(trainId)] = {} 
                                     log("asrEngine: train " .. getTrainName(trainId) .. " initialising tracking")
