@@ -15,7 +15,7 @@
             role = 'CREATOR',
          },
       },
-      minorVersion = 28,   -- shipping contract name/icon crash
+      minorVersion = 29,   -- minor fixes
       majorVersion = 0, 
       severityAdd = "NONE",
       severityRemove = "NONE",
